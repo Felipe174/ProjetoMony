@@ -21,13 +21,14 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: Install Bundler
+      - name: Install Ruby and Bundler
         run: |
+          sudo apt-get install ruby-full
           gem install bundler
 
       - name: Install Fastlane
         run: |
-          bundle install
+          gem install fastlane
 
       - name: Build and Deploy with Fastlane
         run: |
