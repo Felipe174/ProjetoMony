@@ -9,7 +9,7 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -21,9 +21,12 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: Install Ruby and Bundler
+      - name: Install Ruby
         run: |
-          sudo apt-get install ruby-full
+          choco install ruby --version 3.2.0 -y
+
+      - name: Install Bundler
+        run: |
           gem install bundler
 
       - name: Install Fastlane
