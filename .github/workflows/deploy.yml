@@ -47,7 +47,9 @@ jobs:
 
       - name: Clean Build Directory
         run: |
-          rm -rf app/build
+          Remove-Item -Recurse -Force app\build
+        shell: pwsh
+
 
       - name: Build APK
         run: |
