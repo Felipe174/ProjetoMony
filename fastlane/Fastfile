@@ -1,16 +1,8 @@
 default_platform(:android)
 
 platform :android do
-  desc "Build and deploy the Android application"
+  desc "Compila a aplicação para produção"
   lane :deploy do
-    gradle(task: "clean")  # Limpa o projeto
-    gradle(task: "assembleRelease")  # Compila a versão de release
-
-    upload_to_play_store(  # Faz o upload para o Google Play
-      track: 'internal',  # Define o track como interno
-      json_key: "./Mony/app/google-services.json",  # Caminho para o arquivo JSON de credenciais
-      package_name: "com.example.Mony",  # Nome do pacote do seu aplicativo
-      aab: "./app/build/outputs/bundle/release/app-release.aab"  # Caminho para o arquivo AAB gerado
-    )
+    gradle(task: "assembleRelease") # Compila o APK/AAB de release
   end
 end

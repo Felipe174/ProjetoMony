@@ -44,3 +44,7 @@ jobs:
       - name: Build and Deploy with Fastlane
         run: |
           bundle exec fastlane deploy
+
+      - name: Build APK
+        run: |
+          ./gradlew clean assembleRelease
