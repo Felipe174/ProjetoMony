@@ -23,7 +23,7 @@ jobs:
 
       - name: Install Ruby
         run: |
-          choco install ruby --version=2.9 -y
+          choco install ruby 
 
       - name: Install Bundler
         run: |
