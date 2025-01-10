@@ -23,7 +23,7 @@ jobs:
 
       - name: Install Ruby
         run: |
-          choco install ruby -y
+          choco install ruby --version 2.7.6 -y
 
       - name: Install Bundler
         run: |
@@ -35,7 +35,7 @@ jobs:
 
       - name: Install Fastlane
         run: |
-          bundle install
+          gem install fastlane
 
       - name: Build and Deploy with Fastlane
         run: |
