@@ -23,15 +23,19 @@ jobs:
 
       - name: Install Ruby
         run: |
-          choco install ruby -y
+          choco install ruby --version=2.7 -y
 
       - name: Install Bundler
         run: |
           gem install bundler
 
+      - name: Install Development Tools
+        run: |
+          choco install mingw -y
+
       - name: Install Ruby DevKit
         run: |
-          ridk install
+          ridk install 3
 
       - name: Install Fastlane
         run: |
