@@ -47,4 +47,4 @@ jobs:
 
       - name: Build APK
         run: |
-          ./gradlew clean assembleRelease
+          ./gradlew clean assembleRelease --no-daemon
