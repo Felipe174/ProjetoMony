@@ -29,6 +29,10 @@ jobs:
         run: |
           gem install bundler
 
+      - name: Install MSYS2
+        run: |
+          ridk install
+
       - name: Install Fastlane
         run: |
           bundle install
