@@ -21,11 +21,14 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
+      - name: Install Bundler
+        run: |
+          gem install bundler
+
       - name: Install Fastlane
         run: |
-          gem install fastlane
+          bundle install
 
       - name: Build and Deploy with Fastlane
         run: |
-          bundle install  # Se você estiver usando um Gemfile
           bundle exec fastlane deploy
