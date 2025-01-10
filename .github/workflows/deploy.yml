@@ -13,19 +13,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
+      - name: Set up JDK
+        uses: actions/setup-java@v2
         with:
-          node-version: '14'  # ou a versão que você está usanno
+          java-version: '11'  # ou a versão que você está usando
 
-      - name: Install dependencies
-        run: npm install
+      - name: Build with Gradle
+        run: ./gradlew build  # ou ./gradlew assembleRelease para uma build de release
 
       - name: Run tests
-        run: npm test
-
-      - name: Build application
-        run: npm run build
-
-      - name: Deploy to GitHub Pages
-        run: npm run deploy  # ou o comando que você usa para implantar
+        run: ./gradlew test  # ou ./gradlew connectedAndroidTest para testes em dispositivos Android
