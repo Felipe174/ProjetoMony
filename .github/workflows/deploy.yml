@@ -45,11 +45,15 @@ jobs:
         run: |
           bundle exec fastlane deploy
 
+      - name: Clean with Gradle
+        run: |
+          ./gradlew clean
+
       - name: Clean Build Directory
         run: |
+          Start-Sleep -Seconds 5
           Remove-Item -Recurse -Force app\build
         shell: pwsh
-
 
       - name: Build APK
         run: |
