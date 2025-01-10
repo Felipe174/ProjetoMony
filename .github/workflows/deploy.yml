@@ -31,7 +31,7 @@ jobs:
 
       - name: Install Fastlane
         run: |
-          gem install fastlane
+          bundle install
 
       - name: Build and Deploy with Fastlane
         run: |
