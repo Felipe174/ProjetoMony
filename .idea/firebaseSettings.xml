@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="FirebaseConfiguration">
+    <option name="connectionConfigurations">
+      <map>
+        <entry key="b6286117-102e-4e39-b81f-4f371d267acc">
+          <value>
+            <FirebaseConfigInternal>
+              <option name="id" value="b6286117-102e-4e39-b81f-4f371d267acc" />
+              <option name="label" value="Mony" />
+              <option name="projectId" value="com.example.mony" />
+              <option name="serviceAccountPath" value="$PROJECT_DIR$/app/google-services.json" />
+            </FirebaseConfigInternal>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="version" value="2" />
+  </component>
+</project>

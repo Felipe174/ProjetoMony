@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "283317962952",
+    "firebase_url": "https://mony-14fe3-default-rtdb.firebaseio.com",
+    "project_id": "mony-14fe3",
+    "storage_bucket": "mony-14fe3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:283317962952:android:68a68767904a526109bdfd",
+        "android_client_info": {
+          "package_name": "com.example.mony"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "283317962952-b4fonuhui4mfor1191jrpf7s7msd5d43.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.mony",
+            "certificate_hash": "e7eb7a2ee2d2993f337e9ec4af0ab8778762e952"
+          }
+        },
+        {
+          "client_id": "283317962952-edbiod9ee2rs8cvcbtl0l7svuhsgbbh5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-HmnfCErlgYWjuzFnSBs-u-pKOT8Ovrc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "283317962952-edbiod9ee2rs8cvcbtl0l7svuhsgbbh5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
