@@ -8,7 +8,7 @@ platform :android do
 
     upload_to_play_store(  # Faz o upload para o Google Play
       track: 'internal',  # Define o track como interno
-      json_key: "./path/to/your/google-play-credentials.json",  # Caminho para o arquivo JSON de credenciais
+      json_key: "./Mony/app/google-services.json",  # Caminho para o arquivo JSON de credenciais
       package_name: "com.example.Mony",  # Nome do pacote do seu aplicativo
       aab: "./app/build/outputs/bundle/release/app-release.aab"  # Caminho para o arquivo AAB gerado
     )
