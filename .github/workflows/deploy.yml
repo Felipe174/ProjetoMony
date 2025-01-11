@@ -1,10 +1,16 @@
 name: Mony
 
+env:
+  # The name of the main module repository
+  main_project_module: app
+
 on:
   push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+    branches:
+      - 'release/**'
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
 
 jobs:
   build:
@@ -13,58 +19,36 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      # Set Up JDK
+      - name: Set Up JDK
         uses: actions/setup-java@v4
         with:
+          distribution: 'temurin' # Use Temurin for Windows
           java-version: '17'
-          distribution: 'temurin'
-          cache: gradle
+          cache: 'gradle'
 
-      - name: Install Ruby
-        run: |
-          choco install ruby 
+      - name: Change wrapper permissions
+        run: chmod +x ./gradlew
 
-      - name: Install Bundler
-        run: |
-          gem install bundler
+      # Create APK Debug
+      - name: Build APK Debug - ${{ env.main_project_module }} module
+        run: ./gradlew assembleDebug
 
-      - name: Install Development Tools
-        run: |
-          choco install mingw -y
+      # Create APK Release
+      - name: Build APK Release - ${{ env.main_project_module }} module
+        run: ./gradlew assembleRelease
 
-      - name: Install Ruby DevKit
-        run: |
-          ridk install 3
+      # Upload Artifact Build
+      # Upload Debug APK
+      - name: Upload APK Debug
+        uses: actions/upload-artifact@v4
+        with:
+          name: APK Debug
+          path: ${{ env.main_project_module }}/build/outputs/apk/debug/
 
-      - name: Install Fastlane
-        run: |
-          gem install fastlane
-
-      - name: Build and Deploy with Fastlane
-        run: |
-          bundle exec fastlane deploy
-
-      - name: Build APK
-        run: |
-          $maxRetries = 3
-          $retryCount = 0
-          $success = $false
-
-          while (-not $success -and $retryCount -lt $maxRetries) {
-              try {
-                  # Clean the build directory
-                  ./gradlew clean
-                  # Build the APK
-                  ./gradlew assembleRelease --no-daemon
-                  $success = $true
-              } catch {
-                  Write-Host "Build failed, retrying..."
-                  Start-Sleep -Seconds 5
-                  $retryCount++
-              }
-          }
-
-          if (-not $success) {
-              throw "Failed to build APK after $maxRetries attempts."
-          }
-        shell: pwsh
+      # Upload Release APK
+      - name: Upload APK Release
+        uses: actions/upload-artifact@v4
+        with:
+          name: APK Release
+          path: ${{ env.main_project_module }}/build/outputs/apk/release/
