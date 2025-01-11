@@ -47,7 +47,24 @@ jobs:
 
       - name: Clean Build Directory
         run: |
-          ./gradlew clean
+          $maxRetries = 3
+          $retryCount = 0
+          $success = $false
+
+          while (-not $success -and $retryCount -lt $maxRetries) {
+              try {
+                  ./gradlew clean
+                  $success = $true
+              } catch {
+                  Write-Host "Clean failed, retrying..."
+                  Start-Sleep -Seconds 5
+                  $retryCount++
+              }
+          }
+
+          if (-not $success) {
+              throw "Failed to clean build directory after $maxRetries attempts."
+          }
         shell: pwsh
 
       - name: Build APK
