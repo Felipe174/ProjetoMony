@@ -8,7 +8,6 @@ on:
 
 jobs:
   build:
-
     runs-on: windows-latest
 
     steps:
@@ -45,7 +44,7 @@ jobs:
         run: |
           bundle exec fastlane deploy
 
-      - name: Clean Build Directory
+      - name: Build APK
         run: |
           $maxRetries = 3
           $retryCount = 0
@@ -53,20 +52,19 @@ jobs:
 
           while (-not $success -and $retryCount -lt $maxRetries) {
               try {
+                  # Clean the build directory
                   ./gradlew clean
+                  # Build the APK
+                  ./gradlew assembleRelease --no-daemon
                   $success = $true
               } catch {
-                  Write-Host "Clean failed, retrying..."
+                  Write-Host "Build failed, retrying..."
                   Start-Sleep -Seconds 5
                   $retryCount++
               }
           }
 
           if (-not $success) {
-              throw "Failed to clean build directory after $maxRetries attempts."
+              throw "Failed to build APK after $maxRetries attempts."
           }
         shell: pwsh
-
-      - name: Build APK
-        run: |
-          ./gradlew clean assembleRelease --no-daemon
