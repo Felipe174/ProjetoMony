@@ -1,12 +1,8 @@
 name: Mony
 
-env:
-  # The name of the main module repository
-  main_project_module: app
-
-  on:
-    push:
-      branches: [ "master" ]
+on:
+  push:
+    branches: [ "master" ]
     pull_request:
       branches: [ "master" ]
 
