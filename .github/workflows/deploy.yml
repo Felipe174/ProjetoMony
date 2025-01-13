@@ -12,24 +12,25 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-      - name: Set Up JDK
-        uses: actions/setup-java@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v3
         with:
-          distribution: 'zulu' # See 'Supported distributions' for available options
           java-version: '17'
-          cache: 'gradle'
+          distribution: 'temurin'
+
+      - name: Build APKs using BundleTool
+        shell: pwsh
+        run: |
+          java -jar .github/lib/bundletool.jar build-apks `
+            --bundle=app/build/outputs/bundle/release/app-release.aab `
+            --output=app.apks `
+            --mode=universal
 
       - name: Change wrapper permissions
         run: chmod +x ./gradlew
-
-      - name: Build APKs using BundleTool
-        run: |
-            java -jar .github/lib/bundletool.jar build-apks \
-            --bundle=app/build/outputs/bundle/release/app-release.aab \
-            --output=app.apks \
-            --mode=universal
 
       # Run Tests Build
       - name: Run gradle tests
