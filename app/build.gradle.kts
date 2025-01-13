@@ -55,18 +55,18 @@ android {
 
 dependencies {
     // Firebase
-    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
-    implementation("com.google.firebase:firebase-analytics:22.1.2")
+    implementation(libs.firebase.bom)
+    implementation(libs.firebase.analytics)
     implementation("com.google.firebase:firebase-auth:23.1.0")
-    implementation("com.google.firebase:firebase-database:21.0.0")
+    implementation(libs.firebase.database)
     implementation("com.google.android.gms:play-services-auth:21.3.0")
 
     // Glide
-    implementation("com.github.bumptech.glide:glide:4.16.0")
+    implementation(libs.glide)
     implementation(libs.androidx.storage)
     implementation(libs.androidx.ui.test.android)
     implementation(libs.identity.jvm)
-    annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
+    annotationProcessor(libs.compiler)
 
     // Jetpack Compose
     implementation(libs.androidx.core.ktx)
@@ -83,39 +83,39 @@ dependencies {
     }
     debugImplementation(libs.androidx.ui.tooling)
 
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
-    implementation("io.coil-kt:coil-compose:2.7.0")
-    implementation("androidx.compose.foundation:foundation-layout:1.7.6")
-    implementation("androidx.constraintlayout:constraintlayout-compose:1.1.0")
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.coil.compose)
+    implementation(libs.androidx.foundation.layout)
+    implementation(libs.androidx.constraintlayout.compose)
 
     // Hilt for dependency injection
-    implementation("com.google.dagger:hilt-android:2.55")
-    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+    implementation(libs.hilt.android)
+    implementation(libs.androidx.hilt.navigation.compose)
 
     // Lifecycle (for StateFlow, ViewModel, LiveData)
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
 
     // Kotlin Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.1")
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.coroutines.android)
 
     // Serialization
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
+    implementation(libs.kotlinx.serialization.json)
 
     // Gson (se necessário para parsing de objetos)
     implementation("com.google.code.gson:gson:2.11.0")
 
     // Material Icons
-    implementation("androidx.compose.material:material-icons-core:1.7.6")
-    implementation("androidx.compose.material:material-icons-extended:1.7.6")
+    implementation(libs.androidx.material.icons.core)
+    implementation(libs.androidx.material.icons.extended)
 
     // Unit testing
-    testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.2.1")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
 
     // Hilt testing (se necessário)
-    androidTestImplementation("com.google.dagger:hilt-android-testing:2.55")
+    androidTestImplementation(libs.hilt.android.testing)
 
     // Outras dependências necessárias
     implementation(libs.firebase.firestore.ktx)
