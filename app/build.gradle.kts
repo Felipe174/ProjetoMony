@@ -89,7 +89,7 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout-compose:1.1.0")
 
     // Hilt for dependency injection
-    implementation("com.google.dagger:hilt-android:2.54")
+    implementation("com.google.dagger:hilt-android:2.55")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 
     // Lifecycle (for StateFlow, ViewModel, LiveData)
@@ -115,7 +115,7 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
 
     // Hilt testing (se necessário)
-    androidTestImplementation("com.google.dagger:hilt-android-testing:2.54")
+    androidTestImplementation("com.google.dagger:hilt-android-testing:2.55")
 
     // Outras dependências necessárias
     implementation(libs.firebase.firestore.ktx)
