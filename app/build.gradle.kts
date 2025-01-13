@@ -13,8 +13,6 @@ android {
     namespace = "com.example.mony"
     compileSdk = 35 // Versão atual do SDK estável
 
-
-
     buildFeatures {
         viewBinding = false // Desative se estiver usando apenas Compose
         compose = true
@@ -51,7 +49,13 @@ android {
             excludes += "META-INF/versions/9/OSGI-INF/MANIFEST.MF"
         }
     }
+    configurations.all {
+        resolutionStrategy {
+            force("androidx.test.espresso:espresso-core:3.6.1")
+        }
+    }
 }
+
 
 dependencies {
     // Firebase
@@ -59,7 +63,7 @@ dependencies {
     implementation(libs.firebase.analytics)
     implementation("com.google.firebase:firebase-auth:23.1.0")
     implementation(libs.firebase.database)
-    implementation("com.google.android.gms:play-services-auth:21.3.0")
+    implementation(libs.play.services.auth)
 
     // Glide
     implementation(libs.glide)
@@ -103,7 +107,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
 
     // Gson (se necessário para parsing de objetos)
-    implementation("com.google.code.gson:gson:2.11.0")
+    implementation(libs.gson)
 
     // Material Icons
     implementation(libs.androidx.material.icons.core)

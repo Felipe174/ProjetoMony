@@ -5,7 +5,7 @@ buildscript {
         mavenCentral()  // Para outras dependências
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:8.1.0")
+        classpath("com.android.tools.build:gradle:8.8.0")
         classpath("com.google.dagger:hilt-android-gradle-plugin:2.43.2") // Plugin Hilt
     }
 }
