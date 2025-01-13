@@ -21,15 +21,6 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Build APKs using BundleTool
-        shell: pwsh
-        run: |
-          java -jar .github/lib/bundletool-all-1.17.2.jar build-apks `
-            --bundle=app/build/outputs/bundle/release/app-release.aab `
-            --output=app.apks `
-            --mode=universal
-  
-
       - name: Change wrapper permissions
         run: chmod +x ./gradlew
 
@@ -53,3 +44,11 @@ jobs:
       # Noted for main module build [main_project_module]:bundleRelease
       - name: Build app bundle release (AAB) - ${{ env.main_project_module }} module
         run: ./gradlew ${{ env.main_project_module }}:bundleRelease
+
+      - name: Build APKs using BundleTool
+        shell: pwsh
+        run: |
+          java -jar .github/lib/bundletool-all-1.17.2.jar build-apks `
+          --bundle=app/build/outputs/bundle/release/app-release.aab `
+          --output=app.apks `
+          --mode=universal
