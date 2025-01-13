@@ -48,7 +48,7 @@ jobs:
           java -jar .github/lib/bundletool-all-1.17.2.jar build-apks \
           --bundle=app/build/outputs/bundle/release/app-release.aab \
           --output=app.apks \
-          --mode=universal
+          --mode=universal 
 
       # Upload APK to Firebase App Distribution (Com Firebase CLI, se necessário)
       - name: Install Firebase CLI
