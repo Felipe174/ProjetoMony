@@ -28,6 +28,7 @@ jobs:
             --bundle=app/build/outputs/bundle/release/app-release.aab `
             --output=app.apks `
             --mode=universal
+  
 
       - name: Change wrapper permissions
         run: chmod +x ./gradlew
