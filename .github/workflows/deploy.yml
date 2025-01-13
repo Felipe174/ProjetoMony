@@ -8,6 +8,7 @@ on:
 
 env:
   main_project_module: app
+  FIREBASE_APP_ID: "1:283317962952:android:68a68767904a526109bdfd"
 
 jobs:
   build:
@@ -15,33 +16,42 @@ jobs:
     runs-on: windows-latest
 
     steps:
+      # Checkout do código
       - name: Checkout code
         uses: actions/checkout@v2
 
+      # Configuração do JDK
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
 
+      # Definir permissão para o gradlew
       - name: Set executable permission for gradlew
         run: git update-index --chmod=+x gradlew
 
+      # Rodar testes
       - name: Run gradle tests
         run: ./gradlew test
 
+      # Build do projeto completo
       - name: Build gradle project
         run: ./gradlew build
 
+      # Gerar APK Debug
       - name: Build APK Debug
         run: ./gradlew ${{ env.main_project_module }}:assembleDebug
 
+      # Gerar APK Release
       - name: Build APK Release
         run: ./gradlew ${{ env.main_project_module }}:assembleRelease
 
+      # Gerar App Bundle Release
       - name: Build App Bundle Release
         run: ./gradlew ${{ env.main_project_module }}:bundleRelease
 
+      # Gerar APKs usando BundleTool
       - name: Build APKs using BundleTool
         shell: pwsh
         run: |
@@ -49,3 +59,12 @@ jobs:
           --bundle=app/build/outputs/bundle/release/app-release.aab `
           --output=app.apks `
           --mode=universal
+
+      # Upload para Firebase App Distribution
+      - name: Upload APK to Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@v2
+        with:
+          appId: ${{ env.FIREBASE_APP_ID }}
+          token: ${{ secrets.FIREBASE_AUTH_TOKEN }}
+          groups: "testers"
+          file: app/build/outputs/apk/release/app-release.apk
