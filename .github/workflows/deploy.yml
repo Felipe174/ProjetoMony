@@ -24,7 +24,7 @@ jobs:
       - name: Build APKs using BundleTool
         shell: pwsh
         run: |
-          java -jar .github/lib/bundletool.jar build-apks `
+          java -jar .github/lib/bundletool-all-1.17.2.jar build-apks `
             --bundle=app/build/outputs/bundle/release/app-release.aab `
             --output=app.apks `
             --mode=universal
