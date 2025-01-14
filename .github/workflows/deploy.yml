@@ -9,11 +9,10 @@ on:
 env:
   main_project_module: app
 
-
 jobs:
   build:
 
-    runs-on: ubuntu-latest  # Mudei para ubuntu-latest
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
@@ -26,7 +25,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Set executable permission for gradlew
-        run: chmod +x ./gradlew  # Permissão de execução para gradlew (no Linux)
+        run: chmod +x ./gradlew
 
       - name: Run gradle tests
         run: ./gradlew test
@@ -43,23 +42,16 @@ jobs:
       - name: Build App Bundle Release
         run: ./gradlew ${{ env.main_project_module }}:bundleRelease
 
-      - name: Build APKs using BundleTool
-        run: |
-          java -jar .github/lib/bundletool-all-1.17.2.jar build-apks \
-          --bundle=app/build/outputs/bundle/release/app-release.aab \
-          --output=app.apks \
-          --mode=universal 
-
-      # Upload APK to Firebase App Distribution (Com Firebase CLI, se necessário)
-      - name: Install Firebase CLI
-        run: npm install -g firebase-tools
-
-      - name: Authenticate Firebase CLI
-        run: firebase use --add --token ${{ secrets.FIREBASE_AUTH_TOKEN }}
+      - name: Set GOOGLE_APPLICATION_CREDENTIALS
+        run: echo '${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}' > $HOME/firebase-key.json
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
 
       - name: Upload APK to Firebase App Distribution
         run: |
           firebase appdistribution:distribute app/build/outputs/apk/release/app-release.apk \
           --app ${{ secrets.FIREBASE_APP_ID }} \
-          --groups "testers" \
-          --token ${{ secrets.FIREBASE_AUTH_TOKEN }}
+          --groups "testers"
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: $HOME/firebase-key.json
+
