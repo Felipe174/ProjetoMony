@@ -1,49 +1,44 @@
-name: Mony
+name: Build & Distribute APK
 
 on:
   push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
-
-env:
-  main_project_module: app
+    branches:
+      - master
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      # Checkout do código
+      - name: Checkout Code
         uses: actions/checkout@v2
 
+      # Configuração do JDK
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
 
+      # Permissão para executar o gradlew
       - name: Set executable permission for gradlew
         run: chmod +x ./gradlew
 
-      - name: Run gradle tests
-        run: ./gradlew test
-
+      # Build do APK Release
       - name: Build APK Release
-        run: ./gradlew ${{ env.main_project_module }}:assembleRelease
+        run: ./gradlew assembleRelease
 
-      - name: Debug APK Path
+      # Listar arquivos para depuração
+      - name: List APK Files
         run: find app/build/outputs -type f
 
-      - name: Verify APK path
-        run: ls -l app/build/outputs/apk/release/
-
-      - name: Upload artifact to Firebase App Distribution
+      # Upload para Firebase App Distribution
+      - name: Upload to Firebase App Distribution
         uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:
           appId: ${{ secrets.FIREBASE_APP_ID }}
           serviceCredentialsFileContent: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
           groups: testers
           file: app/build/outputs/apk/release/app-release.apk
-
 
