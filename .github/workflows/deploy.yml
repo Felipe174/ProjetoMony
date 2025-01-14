@@ -32,6 +32,9 @@ jobs:
       - name: Build APK Release
         run: ./gradlew ${{ env.main_project_module }}:assembleRelease
 
+      - name: Verify APK path
+        run: ls -l app/build/outputs/apk/release/
+
       - name: Write Firebase Credentials
         run: echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}" > $HOME/firebase-key.json
 
@@ -42,8 +45,7 @@ jobs:
         run: |
           firebase appdistribution:distribute app/build/outputs/apk/release/app-release.apk \
           --app "1:283317962952:android:68a68767904a526109bdfd" \
-          --groups "testers" \
-          --token "${{ secrets.FIREBASE_AUTH_TOKEN }}"
+          --groups "testers"
         env:
           GOOGLE_APPLICATION_CREDENTIALS: $HOME/firebase-key.json
 
