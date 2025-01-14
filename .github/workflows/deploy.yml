@@ -43,7 +43,7 @@ jobs:
 
       - name: Upload APK to Firebase App Distribution
         run: |
-          firebase appdistribution:distribute app/build/outputs/apk/release/app-release.apk \
+          firebase app distribution:distribute app/build/outputs/apk/release/app-release.apk \
           --app "1:283317962952:android:68a68767904a526109bdfd" \
           --groups "testers"
         env:
