@@ -8,6 +8,7 @@ on:
 
 env:
   main_project_module: app
+  GOOGLE_APPLICATION_CREDENTIALS: $HOME/firebase-key.json
 
 jobs:
   build:
@@ -43,10 +44,8 @@ jobs:
 
       - name: Upload APK to Firebase App Distribution
         run: |
-          firebase app distribution:distribute app/build/outputs/apk/release/app-release.apk \
+          firebase appdistribution:distribute app/build/outputs/apk/release/app-release.apk \
           --app "1:283317962952:android:68a68767904a526109bdfd" \
           --groups "testers"
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: $HOME/firebase-key.json
 
 
