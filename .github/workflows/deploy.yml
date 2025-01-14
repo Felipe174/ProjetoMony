@@ -40,7 +40,7 @@ jobs:
 
       # Verificar caminho do APK
       - name: Verify APK path
-        run: ls -l app/build/outputs/apk/release/
+        run: ls -l build/outputs/apk/release/
 
       # Upload para Firebase App Distribution
       - name: Upload artifact to Firebase App Distribution
@@ -49,5 +49,5 @@ jobs:
           appId: ${{ secrets.FIREBASE_APP_ID }}
           serviceCredentialsFileContent: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
           groups: testers
-          file: app/build/outputs/apk/release/app-release.apk
+          file: build/outputs/apk/release/app-release.apk
 
