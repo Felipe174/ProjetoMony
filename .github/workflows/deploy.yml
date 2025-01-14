@@ -6,9 +6,9 @@ on:
   pull_request:
     branches: [ "master" ]
 
-
 env:
   main_project_module: app
+
 
 jobs:
   build:
