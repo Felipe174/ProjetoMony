@@ -27,7 +27,7 @@ jobs:
 
       # Build do APK Release
       - name: Build APK Release
-        run: ./gradlew assembleRelease
+        run: ./gradlew app:assembleRelease
 
       # Listar arquivos para depuração
       - name: List APK Files
