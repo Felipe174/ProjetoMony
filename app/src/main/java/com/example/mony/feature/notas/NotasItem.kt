@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -24,12 +26,15 @@ data class NotasItem(
 )
 
 @Composable
-fun NotaItem(note: NotasItem, onClick: () -> Unit) {
+fun NotaItem(
+    note: NotasItem,
+    onClick: (NotasItem) -> Unit // Alteração: passa a nota clicada
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp)
-            .clickable { onClick() }
+            .clickable { onClick(note) } // Chama a função com o item clicado
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
@@ -37,15 +42,13 @@ fun NotaItem(note: NotasItem, onClick: () -> Unit) {
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis, // Para truncar o texto se for muito longo
-              //style =
+                overflow = TextOverflow.Ellipsis
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = note.content,
-                //style =
                 maxLines = 2,
-                overflow = TextOverflow.Ellipsis // Para truncar o texto se for muito longo
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
@@ -58,7 +61,7 @@ fun NotaItemPreview() {
         note = NotasItem(
             title = "Título da Nota",
             content = "Este é o conteúdo da nota. Ele pode ser um texto longo que será truncado se exceder o limite de linhas.",
-            ),
+        ),
         onClick = {}
     )
 }

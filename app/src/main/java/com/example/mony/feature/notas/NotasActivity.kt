@@ -161,10 +161,11 @@ fun NotasScreen(
                 LazyColumn (
                     modifier = Modifier
 
-                ){
-                    items(notesViewModel.notes) { note ->
-                        NotaItem( note = NotasItem(note.title, note.content)) {
-                            navController.navigate("noteDetails/${note.title}/${note.content}")
+                ){ items(notesViewModel.notes) { note ->
+                    NotaItem(note = note) { clickedNote ->
+                        // Navega para a tela de detalhes, passando o índice ou título como parâmetro
+                        navController.navigate("notaDetalhes/${note.title}/${note.content}")
+                    }
                         }
                     }
                 }
@@ -195,7 +196,6 @@ fun NotasScreen(
             )
         }
     }
-}
 
 @Composable
 fun DrawerMenu(onMenuItemClick: (String) -> Unit) {

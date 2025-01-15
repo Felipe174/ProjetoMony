@@ -4,9 +4,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.mony.feature.conta.ContaScreen
 import com.example.mony.feature.conta.menu.AboutScreen
 import com.example.mony.feature.conta.menu.HelpScreen
@@ -31,14 +33,20 @@ fun MyApp() {
         composable("home") { HomeScreen(appState) }
 
         //notes
-        composable(Destinations.NOTES) { NotasScreen(navController, appState, notesViewModel) }
-        composable("noteEditor") { NoteEditor(navController, appState, notesViewModel) }
-        composable("notaDetalhes/{noteIndex}") { backStackEntry ->
-            val noteIndex = backStackEntry.arguments?.getString("noteIndex")?.toIntOrNull() ?: 0
+        composable(Destinations.NOTES) {
+            NotasScreen(navController, appState, notesViewModel)
+        }
+        composable("noteEditor") {
+            NoteEditor(navController, appState, notesViewModel)
+        }
+        composable(
+            route = "notaDetalhes/{noteIndex}",
+            arguments = listOf(navArgument("noteIndex") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val noteIndex = backStackEntry.arguments?.getInt("noteIndex") ?: 0
             val note = if (noteIndex in notesViewModel.notes.indices) {
                 notesViewModel.notes[noteIndex]
             } else {
-                // Trate o caso em que o índice é inválido
                 return@composable
             }
             NotaDetalhes(
@@ -49,6 +57,7 @@ fun MyApp() {
                 noteIndex = noteIndex
             )
         }
+
 
         //Mais
         composable("mais") { ContaScreen(appState, navController, onLogout = {})  }
