@@ -9,6 +9,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+
     steps:
       # Checkout do código
       - name: Checkout Code
@@ -40,5 +41,5 @@ jobs:
           appId: ${{ secrets.FIREBASE_APP_ID }}
           serviceCredentialsFileContent: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
           groups: testers
-          file: app/build/outputs/apk/release/app-release.apk
+          file: app/build/outputs/apk/release/app-release-unsigned.apk
 
