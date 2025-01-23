@@ -26,6 +26,7 @@ jobs:
       - name: Set executable permission for gradlew
         run: chmod +x ./gradlew
 
+
       # Build do APK Release
       - name: Build APK Release
         run: ./gradlew app:assembleRelease
@@ -41,5 +42,5 @@ jobs:
           appId: ${{ secrets.FIREBASE_APP_ID }}
           serviceCredentialsFileContent: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
           groups: testers
-          file: app/build/outputs/apk/release/app-release-unsigned.apk
+          file: app/build/outputs/apk/release/app-release.apk
 

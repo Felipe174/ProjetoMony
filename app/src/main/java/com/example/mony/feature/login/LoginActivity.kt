@@ -34,6 +34,7 @@ import com.example.mony.R
 import com.example.mony.feature.home.HomeActivity
 import com.example.mony.feature.utils.navegation.MyApp
 import com.example.mony.ui.theme.Roxo
+import com.google.firebase.FirebaseApp
 
 class LoginActivity : ComponentActivity() {
     private var mAuth: FirebaseAuth? = null
@@ -66,6 +67,9 @@ class LoginActivity : ComponentActivity() {
             LoginScreen(
                 onGoogleSignInClick = { googleSignIn() }
             )
+            if (FirebaseApp.getApps(this).isEmpty()) {
+                FirebaseApp.initializeApp(this)
+            }
         }
     }
 

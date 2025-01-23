@@ -4,9 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mony.feature.home.classe.Expense
-import com.example.mony.feature.home.classe.addExpenseToFirestore
 import com.example.mony.feature.home.classe.getExpensesFromFirestore
-import com.google.android.gms.wallet.Wallet
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,6 +12,7 @@ import kotlinx.coroutines.launch
 
 
 class HomeViewModel : ViewModel() {
+
     private val _expenses = MutableStateFlow<List<Expense>>(emptyList())
     val expenses: StateFlow<List<Expense>> = _expenses
 

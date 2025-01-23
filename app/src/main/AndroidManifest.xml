@@ -1,6 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Permissões necessárias -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
@@ -13,8 +14,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         tools:targetApi="31"
-        android:theme="@style/Theme.AppCompat.NoActionBar">
+        android:theme="@style/Theme.Material3.DayNight.NoActionBar">
 
+        <!-- Tela principal -->
         <activity
             android:name=".feature.login.LoginActivity"
             android:launchMode="singleTask"
@@ -25,16 +27,16 @@
             </intent-filter>
         </activity>
 
+        <!-- Demais telas -->
         <activity
             android:name=".feature.home.HomeActivity"
-            android:exported="true">
-        </activity>
+            android:exported="false" />
 
         <activity
             android:name=".feature.notas.NotasActivity"
-            android:exported="true">
-        </activity>
+            android:exported="false" />
 
+        <!-- Metadados adicionais -->
         <meta-data
             android:name="preloaded_fonts"
             android:resource="@array/preloaded_fonts" />

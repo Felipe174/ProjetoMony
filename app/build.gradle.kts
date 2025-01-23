@@ -18,6 +18,7 @@ android {
         compose = true
     }
 
+
     defaultConfig {
         applicationId = "com.example.mony"
         minSdk = 23
@@ -27,13 +28,23 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+    signingConfigs {
+        create("release") {
+            keyAlias = "MyKey"
+            keyPassword = "718293"
+            storeFile = file("C:/Users/felip/keystores/my-release-key.jks")
+            storePassword = "718293"
+    }
+
+        buildTypes {
+            getByName("release") {
+                signingConfig = signingConfigs.getByName("release")
+                isMinifyEnabled = false
+                proguardFiles(
+                    getDefaultProguardFile("proguard-android-optimize.txt"),
+                    "proguard-rules.pro"
+                )
+            }
         }
     }
 
@@ -59,17 +70,17 @@ android {
 
 dependencies {
     // Firebase
-    implementation(libs.firebase.bom)
+    implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
-    implementation("com.google.firebase:firebase-auth:23.1.0")
     implementation(libs.firebase.database)
     implementation(libs.play.services.auth)
-
     // Glide
     implementation(libs.glide)
     implementation(libs.androidx.storage)
     implementation(libs.androidx.ui.test.android)
     implementation(libs.identity.jvm)
+    implementation(libs.firebase.auth.ktx)
+    implementation(libs.androidx.media3.common.ktx)
     annotationProcessor(libs.compiler)
 
     // Jetpack Compose
@@ -130,4 +141,3 @@ dependencies {
     implementation(libs.androidx.glance.appwidget)
     implementation(libs.generativeai)
 }
-

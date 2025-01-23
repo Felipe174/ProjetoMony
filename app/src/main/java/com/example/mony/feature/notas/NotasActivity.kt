@@ -147,9 +147,9 @@ fun NotasScreen(
                 }
             }
         ) { Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = 65.dp,end=5.dp,start=5.dp,bottom=5.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 65.dp,end=5.dp,start=5.dp,bottom=5.dp),
 
             ) {
             if (notesViewModel.notes.isEmpty()) {
@@ -166,10 +166,10 @@ fun NotasScreen(
                         // Navega para a tela de detalhes, passando o índice ou título como parâmetro
                         navController.navigate("notaDetalhes/${note.title}/${note.content}")
                     }
-                        }
-                    }
+                }
                 }
             }
+        }
             Column(
                 Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.Bottom,
@@ -185,17 +185,17 @@ fun NotasScreen(
             }
         }
 
-            // Botão para abrir o Drawer
-            TopAppBar(
-                title = { Text("Notas") },
-                navigationIcon = {
-                    IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                        Icon(Icons.Default.Menu, contentDescription = "Menu")
-                    }
+        // Botão para abrir o Drawer
+        TopAppBar(
+            title = { Text("Notas") },
+            navigationIcon = {
+                IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                    Icon(Icons.Default.Menu, contentDescription = "Menu")
                 }
-            )
-        }
+            }
+        )
     }
+}
 
 @Composable
 fun DrawerMenu(onMenuItemClick: (String) -> Unit) {
@@ -418,4 +418,3 @@ fun DrawerMenuPreview() {
         println("Menu item clicked: $selectedItem")
     }
 }
-

@@ -3,8 +3,9 @@ activity = "1.9.3"
 coilCompose = "2.7.0"
 compiler = "4.16.0"
 constraintlayout = "2.2.0"
-firebaseAnalytics = "22.1.2"
-firebaseBom = "33.7.0"
+firebaseAnalytics = "22.2.0"
+firebaseAuth = "23.1.0"
+firebaseBom = "33.8.0"
 firebaseDatabase = "21.0.0"
 foundationLayout = "1.7.6"
 constraintlayoutCompose = "1.1.0"
@@ -41,13 +42,13 @@ espressoCore = "3.5.1"
 appcompat = "1.6.1"
 material = "1.10.0"
 lifecycleRuntimeKtx = "2.6.1"
-activityCompose = "1.9.3"
+activityCompose = "1.10.0"
 composeBom = "2024.04.01"
 firebaseFirestoreKtx = "25.1.1"
 uiDesktop = "1.7.0"
 navigationRuntimeKtx = "2.8.5"
 playServicesWallet = "19.4.0"
-firebaseDataconnect = "16.0.0-beta03"
+firebaseDataconnect = "16.0.0-beta04"
 material3AdaptiveNavigationSuiteAndroid = "1.3.1"
 glanceAppwidget = "1.1.1"
 material3Jvmstubs = "1.4.0-alpha05"
@@ -55,6 +56,8 @@ generativeai = "0.9.0"
 storage = "1.5.0"
 uiTestAndroid = "1.7.6"
 identityJvm = "202411.1"
+firebaseAuthKtx = "23.1.0"
+media3CommonKtx = "1.5.1"
 
 
 [libraries]
@@ -70,7 +73,8 @@ androidx-material-icons-extended = { module = "androidx.compose.material:materia
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 compiler = { module = "com.github.bumptech.glide:compiler", version.ref = "compiler" }
 firebase-analytics = { module = "com.google.firebase:firebase-analytics", version.ref = "firebaseAnalytics" }
-firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+firebase-auth = { module = "com.google.firebase:firebase-auth", version.ref = "firebaseAuth" }
+firebase-bom = { module = "com.google.firebase:firebase-bom", version = "33.8.0" }
 firebase-database = { module = "com.google.firebase:firebase-database", version.ref = "firebaseDatabase" }
 glide = { module = "com.github.bumptech.glide:glide", version.ref = "compiler" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
@@ -86,13 +90,13 @@ kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 material = { group = "com.google.android.material", name = "material", version = "1.12.0" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version = "2.8.7" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
-androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version = "2024.12.01" }
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version = "2025.01.00" }
 androidx-ui = { group = "androidx.compose.ui", name = "ui" }
 androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
 androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
-firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx", version.ref = "firebaseFirestoreKtx" }
+firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx", version = "25.0.0" }
 androidx-navigation-runtime-ktx = { group = "androidx.navigation", name = "navigation-runtime-ktx", version = "2.8.5" }
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
 play-services-wallet = { group = "com.google.android.gms", name = "play-services-wallet", version.ref = "playServicesWallet" }
@@ -103,6 +107,8 @@ generativeai = { group = "com.google.ai.client.generativeai", name = "generative
 androidx-storage = { group = "androidx.test.services", name = "storage", version.ref = "storage" }
 androidx-ui-test-android = { group = "androidx.compose.ui", name = "ui-test-android", version.ref = "uiTestAndroid" }
 identity-jvm = { group = "com.android.identity", name = "identity-jvm", version.ref = "identityJvm" }
+firebase-auth-ktx = { group = "com.google.firebase", name = "firebase-auth-ktx", version = "22.2.0" }
+androidx-media3-common-ktx = { group = "androidx.media3", name = "media3-common-ktx", version.ref = "media3CommonKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
