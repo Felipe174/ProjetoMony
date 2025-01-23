@@ -26,7 +26,6 @@ jobs:
       - name: Set executable permission for gradlew
         run: chmod +x ./gradlew
 
-
       # Build do APK Release
       - name: Build APK Release
         run: ./gradlew app:assembleRelease
