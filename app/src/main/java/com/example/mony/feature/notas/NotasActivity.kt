@@ -1,8 +1,10 @@
 package com.example.mony.feature.notas
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -20,17 +22,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Notes
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.outlined.Folder
-import androidx.compose.material.icons.outlined.Notes
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -44,8 +40,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.material3.rememberDrawerState
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,35 +51,32 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.mony.R
-import com.example.mony.feature.conta.MenuItem
+import com.example.mony.feature.notas.classe.NotaItem
 import com.example.mony.feature.notas.viewmodel.NotesViewModel
 import com.example.mony.feature.utils.AppState
 import com.example.mony.feature.utils.navegation.MyApp
-import com.example.mony.feature.utils.navegation.TopLevelDestination
 import com.example.mony.feature.utils.navegation.topLevelDestinations
 import kotlinx.coroutines.launch
 
 class NotasActivity : ComponentActivity() {
+    private val notesViewModel: NotesViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            Surface {
-                MyApp()
-            }
+            MyApp()
         }
     }
 }
@@ -96,8 +90,11 @@ fun NotasScreen(
 ) {
     // Estado para controlar a visibilidade do Drawer
     val drawerState = rememberDrawerState(DrawerValue.Closed)
-
+    var isDeleteMode by remember { mutableStateOf(false) }
+    var selectedNotes by remember { mutableStateOf(mutableSetOf<NotaItem>()) }
     val scope = rememberCoroutineScope()
+    val notesState = notesViewModel.notes.collectAsState().value
+
 
     // Scaffold com Drawer
     ModalNavigationDrawer(
@@ -105,7 +102,7 @@ fun NotasScreen(
         drawerContent = {
             DrawerMenu(onMenuItemClick = { selectedItem ->
                 when (selectedItem) {
-                    "Notas" -> appState.navigateToTopLevelDestination("notasScreen")
+                    "Notas" -> appState.navigateToTopLevelDestination("notes")
                     "Arquivos" -> appState.navigateToTopLevelDestination("arquivosScreen")
                     "Configurações" -> appState.navigateToTopLevelDestination("configScreen")
                 }
@@ -146,32 +143,56 @@ fun NotasScreen(
                     )
                 }
             }
-        ) { Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 65.dp,end=5.dp,start=5.dp,bottom=5.dp),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = 65.dp, end = 5.dp, start = 5.dp, bottom = 5.dp),
 
-            ) {
-            if (notesViewModel.notes.isEmpty()) {
-                Text(
-                    text = "Sem notas ainda.",
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
-            } else {
-                LazyColumn (
-                    modifier = Modifier
+                ) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    if (notesState.isEmpty()) {
+                        item {
+                            Text(
+                                text = "Nenhuma nota encontrada",
+                                color = Color.Gray,
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    } else {
 
-                ){ items(notesViewModel.notes) { note ->
-                    NotaItem(note = note) { clickedNote ->
-                        // Navega para a tela de detalhes, passando o índice ou título como parâmetro
-                        navController.navigate("notaDetalhes/${note.title}/${note.content}")
+                        items(notesState) { note ->
+                            NotasItem(
+                                note = note,
+                                onClick = {
+                                    Log.d("NotasItem", "Item clicado: ${note.id}")
+                                    if (isDeleteMode) {
+                                        // Se no modo de exclusão, alterna a seleção
+                                        if (selectedNotes.contains(note)) {
+                                            selectedNotes.remove(note)
+                                        } else {
+                                            selectedNotes.add(note)
+                                        }
+                                    } else {
+                                        navController.navigate("notaDetalhes/{$note.id}")
+                                    }
+                                },
+                                onLongClick = {
+                                    isDeleteMode = true
+                                    selectedNotes.add(note) // Adiciona a nota à seleção
+                                },
+                                isSelected = selectedNotes.contains(note)
+                            )
+                        }
                     }
                 }
-                }
             }
-        }
+            }
             Column(
-                Modifier.fillMaxSize(),
+                Modifier.fillMaxSize().padding(bottom = 85.dp),
                 verticalArrangement = Arrangement.Bottom,
                 horizontalAlignment = Alignment.End
 
@@ -185,17 +206,27 @@ fun NotasScreen(
             }
         }
 
-        // Botão para abrir o Drawer
-        TopAppBar(
-            title = { Text("Notas") },
-            navigationIcon = {
-                IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                    Icon(Icons.Default.Menu, contentDescription = "Menu")
+    TopAppBar(
+        title = { Text("Notas") },
+        actions = {
+            if (isDeleteMode) {
+                IconButton(onClick = {
+                    selectedNotes.forEach { notesViewModel.deleteNote(it) }
+                    selectedNotes.clear() // Limpa a seleção
+                    isDeleteMode = false // Desativa o modo de exclusão
+                }) {
+                    Icon(Icons.Default.Delete, contentDescription = "Excluir Notas")
                 }
             }
-        )
-    }
+        },
+        navigationIcon = {
+            IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                Icon(Icons.Default.Menu, contentDescription = "Menu")
+            }
+        }
+    )
 }
+
 
 @Composable
 fun DrawerMenu(onMenuItemClick: (String) -> Unit) {
@@ -364,15 +395,15 @@ fun NoteEditor(
             Button(
                 onClick = {
                     if (noteTitle.isNotEmpty() && noteContent.isNotEmpty()) {
-                        println("Salvando: $noteTitle - $noteContent") // Log antes de salvar
-                        notesViewModel.addNote(noteTitle, noteContent)
-                        navController.popBackStack()
+                        notesViewModel.addNote(NotaItem(title = noteTitle, content = noteContent))
+                        navController.popBackStack()  // Volta para a tela anterior após salvar
                     }
                 },
                 modifier = Modifier.align(Alignment.End)
             ) {
                 Text("Salvar")
             }
+
 
         }
     }

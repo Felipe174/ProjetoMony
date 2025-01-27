@@ -68,32 +68,23 @@ import com.example.mony.feature.home.classe.Expense
 import com.example.mony.feature.home.classe.ExpenseItem
 import com.example.mony.feature.home.dialog.AddDialog
 import com.example.mony.feature.home.viewmodel.HomeViewModel
-import com.example.mony.feature.notas.NotasScreen
 import com.example.mony.feature.utils.AppState
 import com.example.mony.feature.utils.navegation.MyApp
 import com.example.mony.feature.utils.navegation.topLevelDestinations
-import com.google.firebase.FirebaseApp
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
 class HomeActivity : ComponentActivity() {
+    private lateinit var homeViewModel: HomeViewModel
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        homeViewModel = HomeViewModel()
         setContent {
             Surface {
-                // Passa o ViewModel para a HomeScreen
-                val homeViewModel: HomeViewModel = viewModel()
-                HomeScreen(
-                    appState = AppState(rememberNavController()),
-                    homeViewModel = homeViewModel
-                )
-                // Inicializa o Firebase (apenas se não tiver sido feito em algum lugar central)
-                if (FirebaseApp.getApps(this).isEmpty()) {
-                    FirebaseApp.initializeApp(this)
-                }
-
+                MyApp()
             }
         }
     }
@@ -105,7 +96,7 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
     var showAddExpenseDialog by remember { mutableStateOf(false) }
     var selectedFilter by remember { mutableStateOf("Semana") }
     var currentDate by remember { mutableStateOf(System.currentTimeMillis()) }
-    var selectedItems = remember { mutableStateListOf<Expense>() } // Lista de itens selecionados
+    val selectedItems = remember { mutableStateListOf<Expense>() } // Lista de itens selecionados
     var showDeleteDialog by remember { mutableStateOf(false) } // Controle do diálogo de exclusão
     var showCheckboxes by remember { mutableStateOf(false) } // Controle da visibilidade do checkbox
 
@@ -192,7 +183,7 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
                                     targetValue = expenses.sumOf { it.amount }.toFloat()
                                 )
                                 Text(
-                                    "${formatCurrency(animatedBalance.toDouble())}",
+                                    formatCurrency(animatedBalance.toDouble()),
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.Light
                                 )

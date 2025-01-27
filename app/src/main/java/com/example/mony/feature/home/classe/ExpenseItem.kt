@@ -33,9 +33,10 @@ fun ExpenseItem(
     expense: Expense,
     isSelected: Boolean,
     onSelect: (Boolean) -> Unit,
-    onLongPress: () -> Unit // Adiciona um callback para o longo pressionar
+    onLongPress: () -> Unit
 ) {
-    var showCheckbox by remember { mutableStateOf(false) } // Estado para mostrar o checkbox
+    var showCheckbox by remember { mutableStateOf(false) }
+    val safeImageResId = if (expense.type.imageResId != 0) expense.type.imageResId else R.drawable.ajuda
 
     Row(
         modifier = Modifier
@@ -43,29 +44,26 @@ fun ExpenseItem(
             .padding(8.dp)
             .pointerInput(Unit) {
                 detectTapGestures(
-                    onLongPress = {
-                        onLongPress() // Chama o callback para adicionar à seleção
-                    }
+                    onLongPress = { onLongPress() }
                 )
             },
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Exibir o Checkbox apenas se estiver selecionado
         if (isSelected) {
             Checkbox(
                 checked = true,
-                onCheckedChange = { onSelect(false) } // Desmarcar ao clicar
+                onCheckedChange = { onSelect(false) }
             )
         }
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        // Exibir a imagem do tipo de gasto ou ganho
         Image(
-            painter = painterResource(id = expense.type.imageResId),
+            painter = painterResource(id = safeImageResId),
             contentDescription = expense.type.name,
             modifier = Modifier.size(25.dp)
         )
+
         Spacer(modifier = Modifier.width(16.dp))
 
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -83,6 +81,7 @@ fun ExpenseItem(
         }
     }
 }
+
 
 @Preview(showBackground = true)
 @Composable

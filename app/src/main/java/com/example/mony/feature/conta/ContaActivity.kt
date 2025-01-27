@@ -33,7 +33,6 @@ import com.example.mony.R
 import com.example.mony.feature.utils.AppState
 import com.example.mony.feature.utils.navegation.MyApp
 import com.example.mony.feature.utils.navegation.topLevelDestinations
-import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 
 class ContaActivity : ComponentActivity() {
@@ -41,7 +40,6 @@ class ContaActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            MyApp()
         }
     }
 }

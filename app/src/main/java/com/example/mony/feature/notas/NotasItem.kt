@@ -1,45 +1,50 @@
 package com.example.mony.feature.notas
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-data class NotasItem(
-    val title: String,
-    val content: String
-)
+import com.example.mony.feature.notas.classe.NotaItem
 
 @Composable
-fun NotaItem(
-    note: NotasItem,
-    onClick: (NotasItem) -> Unit // Alteração: passa a nota clicada
+fun NotasItem(
+    note: NotaItem,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    isSelected: Boolean
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp)
-            .clickable { onClick(note) } // Chama a função com o item clicado
+            .padding(2.dp)
+            .clickable(onClick = onClick)
+            .background(if (isSelected) Color.LightGray else Color.White)
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onLongPress = { onLongClick() } // Chama a função de clique longo
+                )
+            },
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = note.title,
                 fontWeight = FontWeight.Bold,
+                color = Color.Black,
                 fontSize = 16.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -48,6 +53,7 @@ fun NotaItem(
             Text(
                 text = note.content,
                 maxLines = 2,
+                color = Color.DarkGray,
                 overflow = TextOverflow.Ellipsis
             )
         }
@@ -57,11 +63,13 @@ fun NotaItem(
 @Preview(showBackground = true)
 @Composable
 fun NotaItemPreview() {
-    NotaItem(
-        note = NotasItem(
+    NotasItem(
+        note = NotaItem(
             title = "Título da Nota",
             content = "Este é o conteúdo da nota. Ele pode ser um texto longo que será truncado se exceder o limite de linhas.",
         ),
-        onClick = {}
+        onClick = {},
+        isSelected = false,
+        onLongClick = {}
     )
 }

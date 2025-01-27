@@ -2,6 +2,7 @@ package com.example.mony.feature.utils.navegation
 
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -24,43 +25,47 @@ import com.example.mony.feature.utils.AppState
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyApp() {
+    // Cria um NavController para gerenciar a navegação
     val navController = rememberNavController()
     val appState = remember { AppState(navController) }
     val notesViewModel: NotesViewModel = viewModel()
 
+    // Configura o NavHost com o NavController e o destino inicial
     NavHost(navController = navController, startDestination = "home") {
-        //home
+        // Tela inicial (Home)
         composable("home") { HomeScreen(appState) }
 
-        //notes
-        composable(Destinations.NOTES) {
+        // Tela de notas
+        composable("notes") {
             NotasScreen(navController, appState, notesViewModel)
         }
+
+        // Tela de edição de nota
         composable("noteEditor") {
             NoteEditor(navController, appState, notesViewModel)
         }
+
+        // Tela de detalhes da nota
         composable(
-            route = "notaDetalhes/{noteIndex}",
-            arguments = listOf(navArgument("noteIndex") { type = NavType.IntType })
+            route = "notaDetalhes/{noteId}",
+            arguments = listOf(navArgument("noteId") { type = NavType.StringType })
         ) { backStackEntry ->
-            val noteIndex = backStackEntry.arguments?.getInt("noteIndex") ?: 0
-            val note = if (noteIndex in notesViewModel.notes.indices) {
-                notesViewModel.notes[noteIndex]
-            } else {
-                return@composable
+            val noteId = backStackEntry.arguments?.getString("noteId")
+            val notesState = notesViewModel.notes.collectAsState().value
+            val note = notesState.find { it.id == noteId }
+            if (note != null) {
+                NotaDetalhes(
+                    title = note.title,
+                    content = note.content,
+                    navController = navController,
+                    notesViewModel = notesViewModel,
+                    noteId = note.id
+                )
             }
-            NotaDetalhes(
-                title = note.title,
-                content = note.content,
-                navController = navController,
-                notesViewModel = notesViewModel,
-                noteIndex = noteIndex
-            )
         }
 
-
-        //Mais
-        composable("mais") { ContaScreen(appState, navController, onLogout = {})  }
+        // Outras telas
+        composable("mais") { ContaScreen(appState, navController, onLogout = {}) }
         composable("info") { InfoScreen(navController) }
         composable("secure") { SecureScreen() }
         composable("help") { HelpScreen() }

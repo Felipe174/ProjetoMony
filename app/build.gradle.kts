@@ -14,7 +14,6 @@ android {
     compileSdk = 35 // Versão atual do SDK estável
 
     buildFeatures {
-        viewBinding = false // Desative se estiver usando apenas Compose
         compose = true
     }
 
@@ -74,6 +73,7 @@ dependencies {
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.database)
     implementation(libs.play.services.auth)
+    implementation(libs.firebase.firestore.ktx)
     // Glide
     implementation(libs.glide)
     implementation(libs.androidx.storage)
@@ -93,9 +93,7 @@ dependencies {
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
-    implementation(libs.androidx.material3) {
-        exclude(group = "androidx.appcompat", module = "appcompat")
-    }
+    implementation(libs.androidx.material3)
     debugImplementation(libs.androidx.ui.tooling)
 
     implementation(libs.androidx.lifecycle.viewmodel.compose)
@@ -133,11 +131,12 @@ dependencies {
     androidTestImplementation(libs.hilt.android.testing)
 
     // Outras dependências necessárias
-    implementation(libs.firebase.firestore.ktx)
     implementation(libs.androidx.navigation.runtime.ktx)
     implementation(libs.play.services.wallet)
     implementation(libs.firebase.dataconnect)
     implementation(libs.androidx.material3.adaptive.navigation.suite.android)
     implementation(libs.androidx.glance.appwidget)
     implementation(libs.generativeai)
+
 }
+

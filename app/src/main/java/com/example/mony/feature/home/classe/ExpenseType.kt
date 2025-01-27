@@ -1,6 +1,7 @@
 package com.example.mony.feature.home.classe
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -24,11 +25,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.mony.R
 
-data class ExpenseType(
-    val imageResId: Int, // ID do recurso da imagem
-    val name: String, // Nome do tipo de gasto ou ganho
-    val isGain: Boolean  // Indica se é um ganho (true) ou um gasto (false)
-)
 
 fun exampleExpenseTypes(): List<ExpenseType> {
     return listOf(
@@ -56,6 +52,8 @@ fun TypeSelectionDialog(
                 Box(modifier = Modifier.heightIn(max = 300.dp)) {
                     LazyColumn {
                         items(expenseTypes) { expenseType ->
+                            val safeImageResId = if (expenseType.imageResId != 0) expenseType.imageResId else R.drawable.conta
+
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -63,11 +61,12 @@ fun TypeSelectionDialog(
                                         onSelect(expenseType)
                                         onDismiss()
                                     }
-                                    .padding(16.dp),
+                                    .padding(16.dp)
+                                    .background(Color.LightGray.copy(alpha = 0.2f)), // Destaque na seleção
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Image(
-                                    painter = painterResource(id = expenseType.imageResId),
+                                    painter = painterResource(id = safeImageResId),
                                     contentDescription = expenseType.name,
                                     modifier = Modifier.size(30.dp)
                                 )
@@ -93,10 +92,7 @@ fun TypeSelectionDialog(
             }
         )
     }
-
 }
-
-
 
 @Preview(showBackground = true)
 @Composable

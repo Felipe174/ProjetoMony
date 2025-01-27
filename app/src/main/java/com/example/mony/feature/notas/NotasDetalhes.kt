@@ -18,16 +18,20 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.example.mony.feature.notas.classe.NotaItem
 import com.example.mony.feature.notas.viewmodel.NotesViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,11 +41,12 @@ fun NotaDetalhes(
     content: String,
     navController: NavController,
     notesViewModel: NotesViewModel,
-    noteIndex: Int
+    noteId: String,
 ) {
     var editableTitle by remember { mutableStateOf(title) }
     var editableContent by remember { mutableStateOf(content) }
     var isModified by remember { mutableStateOf(false) }
+    var lastModified = remember { mutableStateOf(getCurrentDateTime()) }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -53,23 +58,32 @@ fun NotaDetalhes(
                 .padding(16.dp)
         ) {
             TopAppBar(
-                title = { Text("Detalhes da Nota") },
+                title = { Text("Detalhes da Nota", modifier = Modifier.padding(start = 12.dp)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Voltar")
                     }
                 }
             )
-            Spacer(modifier = Modifier.height(16.dp))
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Text(
+                text = "Ultima alteração foi ${lastModified.value}",
+                color = Color.Gray,
+                modifier = Modifier.padding(2.dp).align(Alignment.End)
+            )
 
             OutlinedTextField(
                 value = editableTitle,
                 onValueChange = {
                     editableTitle = it
                     isModified = it != title || editableContent != content
+                    lastModified.value = getCurrentDateTime() // Atualiza a data de modificação
                 },
                 label = { Text("Título") },
                 modifier = Modifier.fillMaxWidth()
+
             )
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -78,6 +92,7 @@ fun NotaDetalhes(
                 onValueChange = {
                     editableContent = it
                     isModified = it != content || editableTitle != title
+                    lastModified.value = getCurrentDateTime() // Atualiza a data de modificação
                 },
                 label = { Text("Conteúdo") },
                 modifier = Modifier
@@ -90,7 +105,7 @@ fun NotaDetalhes(
             if (isModified) {
                 Button(
                     onClick = {
-                        notesViewModel.updateNote(noteIndex, editableTitle, editableContent)
+                        notesViewModel.updateNote(NotaItem(id = noteId, title = editableTitle, content = editableContent))
                         navController.popBackStack()
                     },
                     modifier = Modifier.align(Alignment.End)
@@ -102,15 +117,23 @@ fun NotaDetalhes(
     }
 }
 
+fun getCurrentDateTime(): String {
+    val current = System.currentTimeMillis()
+    val formatter = java.text.SimpleDateFormat("EEEE, dd MMM, HH:mm", java.util.Locale.getDefault())
+    return formatter.format(current)
+}
 
 @Preview(showBackground = true)
 @Composable
 fun NotaDetalhesPreview() {
+    val navController = rememberNavController()
+    val notesViewModel = NotesViewModel()
+
     NotaDetalhes(
         title = "Exemplo de Título",
         content = "Este é o conteúdo completo da nota.",
-        navController = rememberNavController(),
-        notesViewModel = NotesViewModel(),
-        noteIndex = 0
+        navController = navController,
+        notesViewModel = notesViewModel,
+        noteId = "1",
     )
 }

@@ -10,6 +10,7 @@ class AppState(private val navController: NavController) {
         //notes
         const val ROUTE_NOTES = "notes"
         const val ROUTE_ARQUIVOS_SCREEN = "arquivosScreen"
+        const val ROUTE_NOTA_DETALHES = "notaDetalhes/{noteId}"
 
         //Mais
         const val ROUTE_MAIS = "mais"
@@ -25,6 +26,7 @@ class AppState(private val navController: NavController) {
         private val validRoutes = setOf(
             ROUTE_NOTES,
             ROUTE_ARQUIVOS_SCREEN,
+            ROUTE_NOTA_DETALHES,
             ROUTE_MAIS,
             ROUTE_HOME,
             ROUTE_INFO,

@@ -58,6 +58,7 @@ uiTestAndroid = "1.7.6"
 identityJvm = "202411.1"
 firebaseAuthKtx = "23.1.0"
 media3CommonKtx = "1.5.1"
+firebaseCrashlyticsKtx = "19.4.0"
 
 
 [libraries]
@@ -96,7 +97,7 @@ androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
 androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
-firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx", version = "25.0.0" }
+firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx", version = "25.1.1" }
 androidx-navigation-runtime-ktx = { group = "androidx.navigation", name = "navigation-runtime-ktx", version = "2.8.5" }
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
 play-services-wallet = { group = "com.google.android.gms", name = "play-services-wallet", version.ref = "playServicesWallet" }
@@ -107,8 +108,9 @@ generativeai = { group = "com.google.ai.client.generativeai", name = "generative
 androidx-storage = { group = "androidx.test.services", name = "storage", version.ref = "storage" }
 androidx-ui-test-android = { group = "androidx.compose.ui", name = "ui-test-android", version.ref = "uiTestAndroid" }
 identity-jvm = { group = "com.android.identity", name = "identity-jvm", version.ref = "identityJvm" }
-firebase-auth-ktx = { group = "com.google.firebase", name = "firebase-auth-ktx", version = "22.2.0" }
+firebase-auth-ktx = { group = "com.google.firebase", name = "firebase-auth-ktx", version = "23.1.0" }
 androidx-media3-common-ktx = { group = "androidx.media3", name = "media3-common-ktx", version.ref = "media3CommonKtx" }
+firebase-crashlytics-ktx = { group = "com.google.firebase", name = "firebase-crashlytics-ktx", version.ref = "firebaseCrashlyticsKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
