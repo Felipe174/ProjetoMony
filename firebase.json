@@ -1,0 +1,6 @@
+{
+  "firestore": {
+    "rules": "service cloud.firestore {",
+    "indexes": "firebase deploy --only firestore:indexes"
+  }
+}
