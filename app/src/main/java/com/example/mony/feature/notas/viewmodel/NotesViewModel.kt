@@ -10,7 +10,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 open class NotesViewModel : ViewModel() {
 
@@ -18,101 +20,86 @@ open class NotesViewModel : ViewModel() {
     val notes: StateFlow<List<NotaItem>> = _notes
 
     init {
+        viewModelScope.launch(Dispatchers.IO) {
+            loadNotes()
+        }
+    }
+
+    fun addNote(note: NotaItem) {
         viewModelScope.launch {
             try {
-                loadNotes()
+                val addedNoteId = addNoteToFirestore(note)
+                val updatedNote = note.copy(id = addedNoteId)
+                _notes.update { it + updatedNote }
             } catch (e: Exception) {
-                Log.e("NotesViewModel", "Erro ao carregar notas no init: ${e.message}")
+                Log.e("NotesViewModel", "Erro ao adicionar nota: ${e.message}")
+                // Notifique o usuário sobre o erro
             }
         }
     }
 
-    open fun addNote(note: NotaItem) {
-        viewModelScope.launch(Dispatchers.IO) {
-            _notes.value += note // Atualiza localmente
+    fun deleteNote(note: NotaItem) {
+        viewModelScope.launch {
             try {
-                val addedNoteId = addNoteToFirestore(note) // Adiciona ao Firestore
-                _notes.value = _notes.value.map {
-                    if (it.id == "") it.copy(id = addedNoteId) else it
-                }
-            } catch (e: Exception) {
-                _notes.value -= note // Reverte em caso de erro
-            }
-        }
-    }
-
-    fun loadNotes() {
-        viewModelScope.launch(Dispatchers.IO) { // Mover para uma thread de fundo
-            try {
-                val fetchedNotes = getNotesFromFirestore()
-                Log.d("NotesViewModel", "Notas carregadas: $fetchedNotes")
-                _notes.value = fetchedNotes
-            } catch (e: Exception) {
-                Log.e("NotesViewModel", "Erro ao carregar notas: ${e.message}")
-            }
-        }
-    }
-
-    open fun deleteNote(note: NotaItem) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                deleteNoteFromFirestore(note) // Remove do Firestore
-                _notes.value = _notes.value.filter { it.id != note.id } // Atualiza a lista local
+                deleteNoteFromFirestore(note)
+                _notes.update { it.filter { it.id != note.id } }
             } catch (e: Exception) {
                 Log.e("NotesViewModel", "Erro ao excluir nota: ${e.message}")
+                // Notifique o usuário sobre o erro
             }
         }
     }
 
-    open fun updateNote(note: NotaItem) {
-        viewModelScope.launch(Dispatchers.IO) { // Certifique-se de que está na thread de fundo
+    fun updateNote(note: NotaItem) {
+        viewModelScope.launch {
             try {
-                updateNoteInFirestore(note) // Atualiza no Firestore
-                _notes.value = _notes.value.map { if (it.id == note.id) note else it } // Atualiza o estado local
-                loadNotes()
+                updateNoteInFirestore(note)
+                _notes.update { it.map { if (it.id == note.id) note else it } }
             } catch (e: Exception) {
                 Log.e("NotesViewModel", "Erro ao atualizar nota: ${e.message}")
+                // Notifique o usuário sobre o erro
             }
         }
     }
 
-
-
-    // Funções privadas
-    private suspend fun addNoteToFirestore(note: NotaItem): String {
-         val firestore = FirebaseFirestore.getInstance()
-        return try {
-            val documentRef = Tasks.await(firestore.collection("notes").add(note))
-            Log.d("NotesViewModel", "Nota adicionada com sucesso: ${documentRef.id}")
-            documentRef.id // Retorna o ID do documento criado
-        } catch (e: Exception) {
-            Log.e("NotesViewModel", "Erro ao adicionar nota ao Firestore: ${e.message}")
-            throw e
-        }
+    private fun loadNotes() {
+        val firestore = FirebaseFirestore.getInstance()
+        firestore.collection("notes")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e("NotesViewModel", "Erro ao buscar notas: ${error.message}")
+                    return@addSnapshotListener
+                }
+                if (snapshot != null) {
+                    val notesList = snapshot.documents.mapNotNull { document ->
+                        document.toObject(NotaItem::class.java)?.copy(id = document.id)
+                    }
+                    _notes.value = notesList
+                }
+            }
     }
 
-    private suspend fun getNotesFromFirestore(): List<NotaItem> {
+    private suspend fun addNoteToFirestore(note: NotaItem): String {
         val firestore = FirebaseFirestore.getInstance()
         return try {
-            val snapshot = Tasks.await(firestore.collection("notes").get())
-            snapshot.documents.map { document ->
-                document.toObject(NotaItem::class.java)?.copy(id = document.id) ?: NotaItem()
-            }
+            val documentRef = firestore.collection("notes").add(note).await()
+            Log.d("NotesViewModel", "Nota adicionada com sucesso: ${documentRef.id}")
+            documentRef.id
         } catch (e: Exception) {
-            Log.e("NotesViewModel", "Erro ao buscar notas do Firestore: ${e.message}")
-            emptyList()
+            Log.e("NotesViewModel", "Erro ao adicionar nota ao Firestore: ${e.message}")
+            throw e // Consider showing user-friendly error message
         }
     }
 
     private suspend fun deleteNoteFromFirestore(note: NotaItem) {
-         val firestore = FirebaseFirestore.getInstance()
+        val firestore = FirebaseFirestore.getInstance()
         if (note.id.isNotEmpty()) {
             try {
-                Tasks.await(firestore.collection("notes").document(note.id).delete())
+                firestore.collection("notes").document(note.id).delete().await()
                 Log.d("NotesViewModel", "Nota excluída com sucesso: ${note.id}")
             } catch (e: Exception) {
                 Log.e("NotesViewModel", "Erro ao excluir nota do Firestore: ${e.message}")
-                throw e
+                throw e // Consider showing user-friendly error message
             }
         } else {
             Log.e("NotesViewModel", "ID da nota está vazio, não é possível excluir.")
@@ -120,10 +107,10 @@ open class NotesViewModel : ViewModel() {
     }
 
     private suspend fun updateNoteInFirestore(note: NotaItem) {
-         val firestore = FirebaseFirestore.getInstance()
-        if (note.id.isNotEmpty()) {
+        val firestore = FirebaseFirestore.getInstance()
+        if (note.id.isNotEmpty ()) {
             try {
-                Tasks.await(firestore.collection("notes").document(note.id).set(note))
+                firestore.collection("notes").document(note.id).set(note).await()
                 Log.d("NotesViewModel", "Nota atualizada com sucesso: ${note.id}")
             } catch (e: Exception) {
                 Log.e("NotesViewModel", "Erro ao atualizar nota no Firestore: ${e.message}")
@@ -134,4 +121,3 @@ open class NotesViewModel : ViewModel() {
         }
     }
 }
-

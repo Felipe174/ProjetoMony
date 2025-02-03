@@ -1,10 +1,13 @@
 package com.example.mony.feature.notas
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -53,6 +56,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -68,6 +72,7 @@ import com.example.mony.feature.notas.viewmodel.NotesViewModel
 import com.example.mony.feature.utils.AppState
 import com.example.mony.feature.utils.navegation.MyApp
 import com.example.mony.feature.utils.navegation.topLevelDestinations
+import com.example.mony.ui.theme.Amarelo
 import kotlinx.coroutines.launch
 
 class NotasActivity : ComponentActivity() {
@@ -79,24 +84,19 @@ class NotasActivity : ComponentActivity() {
             MyApp()
         }
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
+}@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotasScreen(
     navController: NavController,
     appState: AppState,
     notesViewModel: NotesViewModel
 ) {
-    // Estado para controlar a visibilidade do Drawer
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     var isDeleteMode by remember { mutableStateOf(false) }
     var selectedNotes by remember { mutableStateOf(mutableSetOf<NotaItem>()) }
     val scope = rememberCoroutineScope()
-    val notesState = notesViewModel.notes.collectAsState().value
+    val notesState by notesViewModel.notes.collectAsState(initial = emptyList())
 
-
-    // Scaffold com Drawer
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
@@ -113,31 +113,18 @@ fun NotasScreen(
         NavigationSuiteScaffold(
             navigationSuiteItems = {
                 topLevelDestinations.forEach { destination ->
-                    val selected = appState.isRouteInHierarchy(
-                        destination.route
-                    )
+                    val selected = appState.isRouteInHierarchy(destination.route)
                     item(
                         selected = selected,
                         icon = {
                             Icon(
-                                imageVector = if (selected) {
-                                    destination.selectedIcon
-                                } else {
-                                    destination.unselectedIcon
-                                },
+                                imageVector = if (selected) destination.selectedIcon else destination.unselectedIcon,
                                 contentDescription = stringResource(destination.iconTextId),
-                                tint = if (selected) {
-                                    destination.selectedIconColor
-                                } else {
-                                    destination.unselectedIconColor
-                                }
+                                tint = if (selected) destination.selectedIconColor else destination.unselectedIconColor
                             )
                         },
                         label = {
-                            Text(
-                                text = stringResource(destination.iconTextId),
-                                maxLines = 1
-                            )
+                            Text(text = stringResource(destination.iconTextId), maxLines = 1)
                         },
                         onClick = { appState.navigateToTopLevelDestination(destination.route) }
                     )
@@ -148,8 +135,7 @@ fun NotasScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(top = 65.dp, end = 5.dp, start = 5.dp, bottom = 5.dp),
-
-                ) {
+            ) {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                 ) {
@@ -163,26 +149,27 @@ fun NotasScreen(
                             )
                         }
                     } else {
-
                         items(notesState) { note ->
+                            val alpha by animateFloatAsState(
+                                targetValue = if (selectedNotes.contains(note)) 0.5f else 1f,
+                                animationSpec = tween(durationMillis = 300)
+                            )
                             NotasItem(
                                 note = note,
                                 onClick = {
-                                    Log.d("NotasItem", "Item clicado: ${note.id}")
                                     if (isDeleteMode) {
-                                        // Se no modo de exclusão, alterna a seleção
                                         if (selectedNotes.contains(note)) {
                                             selectedNotes.remove(note)
                                         } else {
                                             selectedNotes.add(note)
                                         }
                                     } else {
-                                        navController.navigate("notaDetalhes/{$note.id}")
+                                        navController.navigate("notaDetalhes/${note.id}")
                                     }
                                 },
                                 onLongClick = {
                                     isDeleteMode = true
-                                    selectedNotes.add(note) // Adiciona a nota à seleção
+                                    selectedNotes.add(note)
                                 },
                                 isSelected = selectedNotes.contains(note)
                             )
@@ -190,14 +177,13 @@ fun NotasScreen(
                     }
                 }
             }
-            }
             Column(
                 Modifier.fillMaxSize().padding(bottom = 85.dp),
                 verticalArrangement = Arrangement.Bottom,
                 horizontalAlignment = Alignment.End
-
             ) {
                 FloatingActionButton(
+                    containerColor = Amarelo,
                     onClick = { navController.navigate("noteEditor") },
                     modifier = Modifier.padding(16.dp)
                 ) {
@@ -206,27 +192,27 @@ fun NotasScreen(
             }
         }
 
-    TopAppBar(
-        title = { Text("Notas") },
-        actions = {
-            if (isDeleteMode) {
-                IconButton(onClick = {
-                    selectedNotes.forEach { notesViewModel.deleteNote(it) }
-                    selectedNotes.clear() // Limpa a seleção
-                    isDeleteMode = false // Desativa o modo de exclusão
-                }) {
-                    Icon(Icons.Default.Delete, contentDescription = "Excluir Notas")
+        TopAppBar(
+            title = { Text("Notas") },
+            actions = {
+                if (isDeleteMode) {
+                    IconButton(onClick = {
+                        selectedNotes.forEach { notesViewModel.deleteNote(it) }
+                        selectedNotes.clear()
+                        isDeleteMode = false
+                    }) {
+                        Icon(Icons.Default.Delete, contentDescription = "Excluir Notas")
+                    }
+                }
+            },
+            navigationIcon = {
+                IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                    Icon(Icons.Default.Menu, contentDescription = "Menu")
                 }
             }
-        },
-        navigationIcon = {
-            IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                Icon(Icons.Default.Menu, contentDescription = "Menu")
-            }
-        }
-    )
+        )
+    }
 }
-
 
 @Composable
 fun DrawerMenu(onMenuItemClick: (String) -> Unit) {
@@ -399,7 +385,8 @@ fun NoteEditor(
                         navController.popBackStack()  // Volta para a tela anterior após salvar
                     }
                 },
-                modifier = Modifier.align(Alignment.End)
+                modifier = Modifier.align(Alignment.End),
+                enabled = noteTitle.isNotEmpty() && noteContent.isNotEmpty()  // Habilita apenas se os campos não estiverem vazios
             ) {
                 Text("Salvar")
             }
@@ -408,16 +395,13 @@ fun NoteEditor(
         }
     }
 }
+
 @Preview(showBackground = true)
 @Composable
 fun NotasScreenPreview() {
-    // Usando um NavController simples
     val navController = rememberNavController()
-
-    // Criando uma instância do AppState
     val appState = AppState(navController)
 
-    // Chamando a tela de Notas diretamente
     NotasScreen(
         navController = navController,
         appState = appState,

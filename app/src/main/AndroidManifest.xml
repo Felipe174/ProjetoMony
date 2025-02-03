@@ -1,5 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.example.mony">
 
     <!-- Permissões necessárias -->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -36,6 +37,11 @@
         <activity
             android:name=".feature.notas.NotasActivity"
             android:exported="false" />
+
+        <activity
+            android:name=".feature.conta.ContaActivity"
+            android:exported="false" />
+
 
         <!-- Metadados adicionais -->
         <meta-data

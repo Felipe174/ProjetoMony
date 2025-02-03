@@ -8,8 +8,10 @@ import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.MoreHoriz
 import androidx.compose.material.icons.outlined.NoteAlt
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.DefaultTintColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.mony.R
+import com.example.mony.ui.theme.AmareloClaro
 
 
 data class TopLevelDestination(
@@ -17,47 +19,45 @@ data class TopLevelDestination(
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector,
     val iconTextId: Int,
-    val selectedIconColor: Color, // Cor do ícone selecionado
-    val unselectedIconColor: Color, // Cor do ícone não selecionado
-    val textColor: Color // Cor do texto
-
+    val selectedIconColor: Color,
+    val unselectedIconColor: Color,
+    val textColor: Color
 )
 
 // Definindo constantes para as rotas
-object Destinations {
-    const val HOME = "home"
-    const val NOTES = "notes"
-    const val MORE = "mais"
+sealed class Destinations(val route: String) {
+    object Home : Destinations("home")
+    object Notes : Destinations("notes")
+    object More : Destinations("mais")
 }
 
 // Exemplo de como você pode definir seus destinos
 val topLevelDestinations = listOf(
     TopLevelDestination(
-        route = Destinations.HOME,
+        route = Destinations.Home.route,
         selectedIcon = Icons.Filled.Home,
         unselectedIcon = Icons.Outlined.Home,
-        iconTextId = R.string.Home, // ID do recurso de string
-        selectedIconColor = Color(0xFF8550E0), // Cor do ícone selecionado
-        unselectedIconColor = Color(0xFF414141), // Cor do ícone não selecionado
-        textColor = Color.Black, // Cor do texto
-
+        iconTextId = R.string.Home,
+        selectedIconColor = AmareloClaro,
+        unselectedIconColor = Color(0xFF414141),
+        textColor = Color.Black
     ),
     TopLevelDestination(
-        route = Destinations.NOTES,
+        route = Destinations.Notes.route,
         selectedIcon = Icons.Filled.NoteAlt,
         unselectedIcon = Icons.Outlined.NoteAlt,
-        iconTextId = R.string.Notas, // ID do recurso de string
-        selectedIconColor = Color(0xFF8550E0), // Cor do ícone selecionado
-        unselectedIconColor = Color(0xFF414141), // Cor do ícone não selecionado
-        textColor = Color.Black // Cor do texto
+        iconTextId = R.string.Notas,
+        selectedIconColor = AmareloClaro,
+        unselectedIconColor = Color(0xFF414141),
+        textColor = Color.Black
     ),
     TopLevelDestination(
-        route = Destinations.MORE,
+        route = Destinations.More.route,
         selectedIcon = Icons.Filled.MoreHoriz,
         unselectedIcon = Icons.Outlined.MoreHoriz,
-        iconTextId = R.string.More, // Certifique-se de que este ID de string existe
-        selectedIconColor = Color(0xFF8550E0), // Cor do ícone selecionado
-        unselectedIconColor = Color(0xFF414141), // Cor do ícone não selecionado
-        textColor = Color.Black // Cor do texto
-    ),
+        iconTextId = R.string.More,
+        selectedIconColor = AmareloClaro,
+        unselectedIconColor = Color(0xFF414141),
+        textColor = Color.Black
+    )
 )

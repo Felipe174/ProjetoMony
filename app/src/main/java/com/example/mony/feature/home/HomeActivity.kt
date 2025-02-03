@@ -3,8 +3,26 @@ package com.example.mony.feature.home
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,11 +32,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBackIosNew
@@ -36,11 +56,16 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItemDefaults.contentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SelectableChipColors
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItemColors
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -52,16 +77,24 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.glance.GlanceTheme.colors
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.example.mony.feature.home.classe.Expense
@@ -71,6 +104,15 @@ import com.example.mony.feature.home.viewmodel.HomeViewModel
 import com.example.mony.feature.utils.AppState
 import com.example.mony.feature.utils.navegation.MyApp
 import com.example.mony.feature.utils.navegation.topLevelDestinations
+import com.example.mony.ui.theme.Amarelo
+import com.example.mony.ui.theme.AmareloClaro
+import com.example.mony.ui.theme.AmareloClaro2
+import com.example.mony.ui.theme.AmareloDark
+import com.example.mony.ui.theme.AmareloMC
+import com.example.mony.ui.theme.AmareloMedio
+import com.example.mony.ui.theme.Gray
+import com.example.mony.ui.theme.OrangeLight
+import com.example.mony.ui.theme.White
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -88,27 +130,21 @@ class HomeActivity : ComponentActivity() {
             }
         }
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
+}@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
     var showAddExpenseDialog by remember { mutableStateOf(false) }
     var selectedFilter by remember { mutableStateOf("Semana") }
     var currentDate by remember { mutableStateOf(System.currentTimeMillis()) }
-    val selectedItems = remember { mutableStateListOf<Expense>() } // Lista de itens selecionados
-    var showDeleteDialog by remember { mutableStateOf(false) } // Controle do diálogo de exclusão
-    var showCheckboxes by remember { mutableStateOf(false) } // Controle da visibilidade do checkbox
+    val selectedItems = remember { mutableStateListOf<Expense>() }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var showCheckboxes by remember { mutableStateOf(false) }
 
-    // Carrega as despesas do Firestore ao iniciar a tela
     LaunchedEffect(Unit) {
         homeViewModel.loadExpenses()
     }
 
-    // Observe as despesas do ViewModel
     val expenses by homeViewModel.expenses.collectAsState()
-
-    // Filtra despesas com base no período selecionado
     val filteredExpenses = filterExpensesByPeriod(expenses, currentDate, selectedFilter)
 
     NavigationSuiteScaffold(
@@ -118,22 +154,14 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
                 item(
                     selected = selected,
                     icon = {
-                        // Aplica animação de suavização no ícone
-                        val animatedIconSize by animateFloatAsState(
-                            targetValue = if (selected) 32f else 24f
-                        )
                         Icon(
                             imageVector = if (selected) destination.selectedIcon else destination.unselectedIcon,
                             contentDescription = stringResource(destination.iconTextId),
-                            tint = if (selected) destination.selectedIconColor else destination.unselectedIconColor,
-                            modifier = Modifier.size(animatedIconSize.dp)
+                            tint = if (selected) destination.selectedIconColor else destination.unselectedIconColor
                         )
                     },
                     label = {
-                        Text(
-                            text = stringResource(destination.iconTextId),
-                            maxLines = 1
-                        )
+                        Text(text = stringResource(destination.iconTextId), maxLines = 1)
                     },
                     onClick = { appState.navigateToTopLevelDestination(destination.route) }
                 )
@@ -143,13 +171,10 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
         Column(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            // Barra superior da tela
             TopAppBar(
-                title = {
-                    Text("Home", fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                },
+                title = {},
                 actions = {
                     if (selectedItems.isNotEmpty()) {
                         IconButton(onClick = { showDeleteDialog = true }) {
@@ -159,7 +184,8 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
                     IconButton(onClick = { showAddExpenseDialog = true }) {
                         Icon(imageVector = Icons.Filled.Add, contentDescription = "Adicionar")
                     }
-                }
+                },
+                colors = topAppBarColors(White)
             )
 
             Scaffold {
@@ -167,9 +193,9 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(it)
+                        .background(White)
                 ) {
                     item {
-                        // Exibição de saldo com animação de soma
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -177,8 +203,7 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
                                 .padding(start = 5.dp, end = 5.dp)
                         ) {
                             Column(Modifier.padding(start = 5.dp)) {
-                                Text("Dinheiro", fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                                // Animação de transição suave do valor do saldo
+                                Text("Dinheiro", fontSize = 23.sp, fontWeight = FontWeight.Bold)
                                 val animatedBalance by animateFloatAsState(
                                     targetValue = expenses.sumOf { it.amount }.toFloat()
                                 )
@@ -189,11 +214,6 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
                                 )
                             }
                             Spacer(modifier = Modifier.weight(1f))
-                            Icon(
-                                imageVector = Icons.Filled.Edit,
-                                contentDescription = "Editar",
-                                modifier = Modifier.size(30.dp)
-                            )
                         }
                     }
 
@@ -208,38 +228,63 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
                         )
                     }
 
-                    items(filteredExpenses) { expense ->
-                        ExpenseItem(
-                            expense = expense,
-                            isSelected = selectedItems.contains(expense),
-                            onSelect = { isSelected ->
-                                if (isSelected) {
-                                    selectedItems.add(expense)
-                                } else {
-                                    selectedItems.remove(expense)
-                                }
-                            },
-                            onLongPress = {
-                                // Adiciona o item à lista de selecionados ao pressionar e segurar
-                                if (!selectedItems.contains(expense)) {
-                                    selectedItems.add(expense)
-                                }
-                                showCheckboxes = true
+                    items(filteredExpenses, key = { it.id }) { expense ->
+                        AnimatedVisibility(
+                            visible = true, // Aqui você pode condicionar a visibilidade se desejar
+                            enter = fadeIn(animationSpec = tween(durationMillis = 300)) + slideInVertically(),
+                            exit = fadeOut(animationSpec = tween(durationMillis = 300)) + slideOutVertically()
+                        ) {
+                            // Animação de opacidade para itens de despesa já existente (mantém o seu alpha)
+                            val alpha by animateFloatAsState(
+                                targetValue = if (selectedItems.contains(expense)) 0.5f else 1f,
+                                animationSpec = tween(durationMillis = 300)
+                            )
+                            Box(modifier = Modifier.graphicsLayer(alpha = alpha)) {
+                                ExpenseItem(
+                                    expense = expense,
+                                    isSelected = selectedItems.contains(expense),
+                                    onSelect = { isSelected ->
+                                        if (isSelected) {
+                                            selectedItems.add(expense)
+                                        } else {
+                                            selectedItems.remove(expense)
+                                        }
+                                    },
+                                    onLongPress = {
+                                        if (!selectedItems.contains(expense)) {
+                                            selectedItems.add(expense)
+                                        }
+                                        showCheckboxes = true
+                                    }
+                                )
                             }
-                        )
+                        }
                     }
                 }
 
-                // Botão flutuante para adicionar nova despesa com animação
                 Column(
                     Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.Bottom,
                     horizontalAlignment = Alignment.End
                 ) {
-                    BtnAdicionar(onClick = { showAddExpenseDialog = true })
+                    var buttonState by remember { mutableStateOf(false) }
+                    val infiniteTransition = rememberInfiniteTransition()
+                    val floatAnimation by infiniteTransition.animateFloat(
+                        initialValue = 0f,
+                        targetValue = 10f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(1000, easing = FastOutSlowInEasing),
+                            repeatMode = RepeatMode.Reverse
+                        ),
+                        label = "floatAnimation"
+                    )
+
+                    BtnAdicionar(
+                        onClick = { showAddExpenseDialog = true },
+                        modifier = Modifier.offset(y = floatAnimation.dp)
+                    )
                 }
 
-                // Diálogo para adicionar gasto ou ganho
                 AddDialog(
                     showDialog = showAddExpenseDialog,
                     onDismiss = { showAddExpenseDialog = false },
@@ -271,47 +316,57 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
         }
     }
 
-    // Diálogo de confirmação para exclusão
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             title = { Text("Confirmar Exclusão") },
-            text = { Text("Você tem certeza que deseja excluir os itens selecionados?") },
+            text = { Text("Deseja excluir os itens selecionados?") },
             confirmButton = {
                 TextButton(onClick = {
-                    selectedItems.forEach { expense ->
-                        homeViewModel.deleteExpense(expense)
-                    }
+                    selectedItems.forEach { homeViewModel.deleteExpense(it) }
                     selectedItems.clear()
                     showDeleteDialog = false
-                }) {
-                    Text("Sim")
-                }
+                }) { Text("Sim") }
             },
-            dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Não")
-                }
-            }
+            dismissButton = { TextButton(onClick = { showDeleteDialog = false }) { Text("Não") } }
         )
     }
 }
-
 @Composable
-fun BtnAdicionar(onClick: () -> Unit) {
+fun BtnAdicionar(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    var rotated by remember { mutableStateOf(false) }
+    val rotationAngle by animateFloatAsState(
+        targetValue = if (rotated) 360f else 0f,
+        animationSpec = tween(durationMillis = 600)
+    )
+
     ExtendedFloatingActionButton(
-        onClick = { onClick() },
-        icon = { Icon(Icons.Filled.Add, "Adicionar") },
+        onClick = {
+            rotated = !rotated  // Animação de rotação
+            onClick()
+        },
+        icon = {
+            Icon(
+                imageVector = Icons.Filled.Add,
+                contentDescription = "Adicionar",
+                modifier = Modifier.rotate(rotationAngle)
+            )
+        },
         text = { Text(text = "Adicionar") },
-        containerColor = Color(0xFFBD95FF),
+        containerColor = AmareloClaro,
         contentColor = Color.Black,
         elevation = FloatingActionButtonDefaults.elevation(8.dp),
-        modifier = Modifier
-            .padding(16.dp) // Adiciona um espaçamento ao redor do botão
+        modifier = modifier
+            .padding(16.dp)
+            .border(
+                width = 2.dp,
+                color = AmareloMC,
+                shape = RoundedCornerShape(12.dp)
+            ),
     )
 }
 
-// Função principal com gráfico
+
 @Composable
 fun HomeWithGraph(
     selectedFilter: String,
@@ -323,6 +378,13 @@ fun HomeWithGraph(
     // Se nenhum filtro estiver selecionado, defina "Semana" como padrão
     val effectiveFilter = if (selectedFilter.isEmpty()) "Semana" else selectedFilter
     val filteredExpenses = filterExpensesByPeriod(expensesData, currentDate, effectiveFilter)
+
+    // Animação para o total de despesas
+    val totalAmount = filteredExpenses.sumOf { it.amount }
+    val animatedTotal by animateFloatAsState(
+        targetValue = totalAmount.toFloat(),
+        animationSpec = tween(durationMillis = 500)
+    )
 
     Column(
         modifier = Modifier.fillMaxSize().padding(start = 5.dp, end = 5.dp),
@@ -342,103 +404,195 @@ fun HomeWithGraph(
         Spacer(modifier = Modifier.height(10.dp))
 
         ElevatedCard(
+            colors = CardDefaults.cardColors(White),
             elevation = CardDefaults.cardElevation(
-                defaultElevation = 3.dp
+                defaultElevation = 3.dp,
             ),
             modifier = Modifier
                 .size(width = 500.dp, height = 310.dp)
                 .padding(5.dp)
+                .border(
+                    width = 2.dp, // Espessura do contorno
+                    color = AmareloClaro, // Cor do contorno
+                    shape = RoundedCornerShape(12.dp) // Forma do contorno (arredondada aqui)
+                ),
         ) {
+            Column(modifier = Modifier.fillMaxWidth().padding(start = 15.dp, top = 15.dp, end = 15.dp), horizontalAlignment = Alignment.Start) {
+                Text(
+                    text = String.format("%.2f€", animatedTotal), // Formatação para duas casas decimais
+                    fontSize = 29.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    modifier = Modifier.padding(start = 7.dp, bottom = 5.dp),
+                    text = "Renda",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
 
-
-
-        Column(modifier = Modifier.fillMaxWidth().padding(start = 15.dp,top=15.dp,end=15.dp), horizontalAlignment = Alignment.Start) {
-            Text(
-                text = "${filteredExpenses.sumOf { it.amount }}€",
-                fontSize = 29.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                modifier = Modifier.padding(start = 7.dp, bottom = 5.dp),
-                text = "Renda",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium
-            )
+            Box(
+                modifier = Modifier.fillMaxWidth().padding(start = 10.dp, end = 10.dp).height(200.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                // Animação do gráfico
+                BarChart(
+                    data = filteredExpenses.map { it.amount },
+                    selectedFilter = effectiveFilter,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         }
-
-        Box(
-            modifier = Modifier.fillMaxWidth().padding(start = 10.dp, end = 10.dp).height(200.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            BarChart(
-                data = filteredExpenses.map { it.amount },
-                selectedFilter = effectiveFilter,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
-}
         Spacer(modifier = Modifier.height(15.dp))
     }
 }
+
+
 @Composable
 fun BarChart(
-    data: List<Double>, // Agora recebe uma lista de valores
+    data: List<Double>,
     selectedFilter: String,
+    barColor: Color = Color.Green,
     modifier: Modifier = Modifier
 ) {
+    // Rótulos conforme o filtro selecionado
     val labels = when (selectedFilter) {
         "Semana" -> listOf("Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom")
         "Mês" -> (1..4).map { "Semana $it" }
-        "Ano" -> listOf(
-            "Jan",
-            "Fev",
-            "Mar",
-            "Abr",
-            "Mai",
-            "Jun",
-            "Jul",
-            "Ago",
-            "Set",
-            "Out",
-            "Nov",
-            "Dez"
-        )
+        "Ano" -> listOf("Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez")
         else -> emptyList()
     }
 
-    Canvas(modifier = modifier) {
-        val maxY = data.maxOrNull() ?: 1.0
-        val barSpacing = size.width / (data.size + 1)
-        val barWidth = barSpacing * 0.6f
+    // Animação das alturas de cada barra
+    val animatedData = data.map { value ->
+        animateFloatAsState(
+            targetValue = value.toFloat(),
+            animationSpec = tween(durationMillis = 500)
+        ).value
+    }
 
-        data.forEachIndexed { index, value ->
-            val barHeight = (value / maxY) * size.height
-            val barLeft = barSpacing * (index + 1) - barWidth / 2
-            val barTop = size.height - barHeight
+    // Estado para armazenar o índice da barra selecionada (tooltip)
+    var selectedBarIndex by remember { mutableStateOf<Int?>(null) }
+    // Estado para armazenar a posição do tooltip (calculada fora do Canvas)
+    var tooltipPosition by remember { mutableStateOf(Offset.Zero) }
 
-            drawRect(
-                color = Color.Green,
-                topLeft = Offset(barLeft, barTop.toFloat()),
-                size = Size(barWidth, barHeight.toFloat())
-            )
+    Box(modifier = modifier) {
+        // Canvas desenha as barras e detecta toques
+        Canvas(
+            modifier = Modifier
+                .fillMaxSize()
+                .pointerInput(Unit) {
+                    detectTapGestures { tapOffset ->
+                        var barraSelecionada: Int? = null
+                        val canvasWidth = size.width
+                        val canvasHeight = size.height
+                        val barSpacing = canvasWidth / (data.size + 1)
+                        val barWidth = barSpacing * 0.6f
 
-            labels.getOrNull(index)?.let { label ->
-                drawContext.canvas.nativeCanvas.drawText(
-                    label,
-                    (barLeft + barSpacing * (index + 1)) / 2,
-                    size.height + 20.dp.toPx(),
-                    android.graphics.Paint().apply {
-                        textSize = 36f
-                        color = android.graphics.Color.BLACK
-                        textAlign = android.graphics.Paint.Align.CENTER
+                        data.forEachIndexed { index, _ ->
+                            val value = animatedData.getOrNull(index) ?: 0f
+                            val maxValue = data.maxOrNull() ?: 1.0
+                            val barHeight = (value / maxValue * canvasHeight)
+                            val barLeft = barSpacing * (index + 1) - barWidth / 2
+                            val barTop = canvasHeight - barHeight
+
+                            if (tapOffset.x in barLeft..(barLeft + barWidth) &&
+                                tapOffset.y in barTop..canvasHeight.toDouble()
+                            ) {
+                                barraSelecionada = index
+                                // Calcula a posição do tooltip (centralizado acima da barra)
+                                tooltipPosition = Offset(barLeft + barWidth / 2, barTop.toFloat())
+                            }
+                        }
+                        selectedBarIndex = barraSelecionada
                     }
+                }
+        ) {
+            val canvasWidth = size.width
+            val canvasHeight = size.height
+            val barSpacing = canvasWidth / (data.size + 1)
+            val barWidth = barSpacing * 0.6f
+            val maxValue = data.maxOrNull() ?: 1.0
+
+            animatedData.forEachIndexed { index, value ->
+                val barHeight = (value / maxValue * canvasHeight)
+                val barLeft = barSpacing * (index + 1) - barWidth / 2
+                val barTop = canvasHeight - barHeight
+
+                // Desenha a barra
+                drawRect(
+                    color = barColor,
+                    topLeft = Offset(barLeft, barTop.toFloat()),
+                    size = Size(barWidth, barHeight.toFloat())
                 )
+
+                // Desenha o rótulo do eixo X abaixo de cada barra
+                labels.getOrNull(index)?.let { label ->
+                    drawContext.canvas.nativeCanvas.drawText(
+                        label,
+                        barLeft + barWidth / 2,
+                        canvasHeight + 20.dp.toPx(),
+                        android.graphics.Paint().apply {
+                            textSize = 36f
+                            color = android.graphics.Color.BLACK
+                            textAlign = android.graphics.Paint.Align.CENTER
+                        }
+                    )
+                }
+            }
+        }
+
+        // Exibe o tooltip fora do Canvas (na camada superior do Box)
+        selectedBarIndex?.let { index ->
+            AnimatedVisibility(
+                visible = true,
+                enter = fadeIn(animationSpec = tween(300)) + scaleIn(animationSpec = tween(300)),
+                exit = fadeOut(animationSpec = tween(300)) + scaleOut(animationSpec = tween(300))
+            ) {
+                Box(
+                    modifier = Modifier
+                        .offset {
+                            // Posiciona o tooltip um pouco acima da barra
+                            IntOffset(
+                                tooltipPosition.x.toInt() - 40, // ajuste horizontal (metade da largura do tooltip)
+                                (tooltipPosition.y - 60).toInt() // ajuste vertical para que o tooltip fique acima
+                            )
+                        }
+                        .background(Color(0xFF6200EE), shape = RoundedCornerShape(8.dp))
+                        .padding(8.dp)
+                ) {
+                    // Exibe o valor original da barra, não o animado
+                    Text(
+                        text = data[index].toString(),
+                        color = Color.White,
+                        style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    )
+                }
             }
         }
     }
 }
 
 
+
+
+@Composable
+fun EnhancedTooltip (value: Double, position: Offset) {
+    Box(
+        modifier = Modifier
+            .offset { IntOffset(position.x.toInt(), position.y.toInt()) }
+            .background(Color(0xFF6200EE), shape = RoundedCornerShape(8.dp))
+            .shadow(4.dp, shape = RoundedCornerShape(8.dp))
+            .padding(12.dp)
+            .animateContentSize() // Animação de tamanho
+    ) {
+        Text(
+            text = value.toString(),
+            color = Color.White,
+            style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 16.sp)
+        )
+    }
+}
 
 @Composable
 fun FilterChip(
@@ -460,6 +614,19 @@ fun FilterChip(
                     onFilterChange(option)
                 },
                 label = { Text(option) },
+
+                //design
+                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = AmareloMedio),
+                border = BorderStroke(
+                    width = 1.dp,
+                color = if (selectedOption == option) {
+                    AmareloDark
+                } else {
+                    Gray
+                },
+                ),
+                //
+
                 leadingIcon = if (selectedOption == option) {
                     {
                         Icon(
@@ -470,12 +637,12 @@ fun FilterChip(
                     }
                 } else {
                     null
-                }
+                },
+
             )
         }
     }
 }
-
 @Composable
 fun DateSelectors(
     currentDate: Long,
@@ -505,6 +672,12 @@ fun DateSelectors(
         }
     }
 
+    // Animação de opacidade
+    val alpha by animateFloatAsState(
+        targetValue = if (currentDate > 0) 1f else 0f,
+        animationSpec = tween(durationMillis = 300)
+    )
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
@@ -521,11 +694,14 @@ fun DateSelectors(
             Icon(imageVector = Icons.Filled.ArrowBackIosNew, contentDescription = "Retroceder")
         }
 
+        // Aplicando a animação de opacidade ao texto da data
         Text(
             text = dateText,
             fontSize = 16.sp,
             fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(horizontal = 16.dp)
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .graphicsLayer(alpha = alpha) // Aplicando a opacidade
         )
 
         IconButton(onClick = {

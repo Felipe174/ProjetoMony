@@ -18,6 +18,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
@@ -33,7 +34,6 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.mony.feature.notas.classe.NotaItem
 import com.example.mony.feature.notas.viewmodel.NotesViewModel
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotaDetalhes(
@@ -46,7 +46,14 @@ fun NotaDetalhes(
     var editableTitle by remember { mutableStateOf(title) }
     var editableContent by remember { mutableStateOf(content) }
     var isModified by remember { mutableStateOf(false) }
-    var lastModified = remember { mutableStateOf(getCurrentDateTime()) }
+    var lastModified by remember { mutableStateOf(getCurrentDateTime()) }
+
+    // Atualiza a data de modificação a cada segundo enquanto estiver editando
+    LaunchedEffect(isModified) {
+        if (isModified) {
+            lastModified = getCurrentDateTime()
+        }
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -68,44 +75,51 @@ fun NotaDetalhes(
 
             Spacer(modifier = Modifier.height(10.dp))
 
+            // Exibe a data de modificação
             Text(
-                text = "Ultima alteração foi ${lastModified.value}",
+                text = "Última alteração foi em $lastModified",
                 color = Color.Gray,
                 modifier = Modifier.padding(2.dp).align(Alignment.End)
             )
 
+            Spacer(modifier = Modifier.height(2.dp))
+
+            // Campo de título editável
             OutlinedTextField(
                 value = editableTitle,
                 onValueChange = {
                     editableTitle = it
                     isModified = it != title || editableContent != content
-                    lastModified.value = getCurrentDateTime() // Atualiza a data de modificação
                 },
                 label = { Text("Título") },
-                modifier = Modifier.fillMaxWidth()
-
+                modifier = Modifier.fillMaxWidth(),
             )
+
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Campo de conteúdo editável
             OutlinedTextField(
                 value = editableContent,
                 onValueChange = {
                     editableContent = it
                     isModified = it != content || editableTitle != title
-                    lastModified.value = getCurrentDateTime() // Atualiza a data de modificação
                 },
                 label = { Text("Conteúdo") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
-                maxLines = Int.MAX_VALUE
+                maxLines = Int.MAX_VALUE,
             )
+
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Botão de salvar se houver alterações
             if (isModified) {
                 Button(
                     onClick = {
+                        // Salva a nota
                         notesViewModel.updateNote(NotaItem(id = noteId, title = editableTitle, content = editableContent))
+                        lastModified = getCurrentDateTime() // Atualiza a data de modificação ao salvar
                         navController.popBackStack()
                     },
                     modifier = Modifier.align(Alignment.End)
@@ -118,9 +132,13 @@ fun NotaDetalhes(
 }
 
 fun getCurrentDateTime(): String {
-    val current = System.currentTimeMillis()
-    val formatter = java.text.SimpleDateFormat("EEEE, dd MMM, HH:mm", java.util.Locale.getDefault())
-    return formatter.format(current)
+    return try {
+        val current = System.currentTimeMillis()
+        val formatter = java.text.SimpleDateFormat("EEEE, dd MMM, HH:mm", java.util.Locale.getDefault())
+        formatter.format(current)
+    } catch (e: Exception) {
+        "Erro ao obter data/hora"
+    }
 }
 
 @Preview(showBackground = true)

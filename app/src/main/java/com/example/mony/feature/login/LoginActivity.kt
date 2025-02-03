@@ -30,97 +30,99 @@ import com.google.firebase.auth.GoogleAuthProvider
 import androidx.compose.material3.Text // Para usar o Text do Material Design
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.example.mony.R
 import com.example.mony.feature.home.HomeActivity
+import com.example.mony.feature.login.viewmodel.LoginState
+import com.example.mony.feature.login.viewmodel.LoginViewModel
 import com.example.mony.feature.utils.navegation.MyApp
 import com.example.mony.ui.theme.Roxo
 import com.google.firebase.FirebaseApp
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 class LoginActivity : ComponentActivity() {
-    private var mAuth: FirebaseAuth? = null
-    private var mGoogleSignInClient: GoogleSignInClient? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        mAuth = FirebaseAuth.getInstance()
-
-
-        // Configuração do Google Sign-In
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(getString(R.string.default_web_client_id)) // Use a chave correta do strings.xml
-            .requestEmail()
-            .build()
-
-        mGoogleSignInClient = GoogleSignIn.getClient(this, gso)
-
-
-        // Verificar se o usuário já está logado
-        val currentUser = mAuth!!.currentUser
-        if (currentUser != null) {
-            val intent = Intent(this@LoginActivity, HomeActivity::class.java)
-            startActivity(intent)
-            finish()
-        }
-
-        // Usar o Compose para exibir a tela de login
-        setContent {
-            LoginScreen(
-                onGoogleSignInClick = { googleSignIn() }
-            )
-            if (FirebaseApp.getApps(this).isEmpty()) {
-                FirebaseApp.initializeApp(this)
+    private lateinit var googleSignInClient: GoogleSignInClient
+    private val viewModel: LoginViewModel by viewModels {
+        object : androidx.lifecycle.ViewModelProvider.Factory {
+            override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+                return LoginViewModel(FirebaseAuth.getInstance()) as T
             }
         }
     }
 
-    private fun googleSignIn() {
-        val signInIntent = mGoogleSignInClient!!.signInIntent
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        // Configuração do Google Sign-In
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(getString(R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+
+        googleSignInClient = GoogleSignIn.getClient(this, gso)
+
+        // Observando mudanças no estado de login
+        lifecycleScope.launch {
+            viewModel.loginState.collectLatest { state ->
+                when (state) {
+                    is LoginState.Success -> navigateToHome()
+                    is LoginState.Error -> showError(state.message)
+                    LoginState.Loading -> showLoading()
+                    else -> Unit
+                }
+            }
+        }
+
+        setContent {
+            LoginScreen(
+                onGoogleSignInClick = { startGoogleSignIn() }
+            )
+        }
+    }
+
+    private fun startGoogleSignIn() {
+        val signInIntent = googleSignInClient.signInIntent
         startActivityForResult(signInIntent, RC_SIGN_IN)
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
         if (requestCode == RC_SIGN_IN) {
-            val task = GoogleSignIn.getSignedInAccountFromIntent(data)
-            handleSignInResult(task)
-        }
-    }
-
-    private fun handleSignInResult(completedTask: Task<GoogleSignInAccount>) {
-        try {
-            val account = completedTask.getResult(ApiException::class.java)
-            firebaseAuthWithGoogle(account.idToken)
-        } catch (e: ApiException) {
-            Log.w("LoginActivity", "signInResult:failed code=" + e.statusCode, e)
-            Toast.makeText(this, "Falha no login: " + e.message, Toast.LENGTH_LONG).show()
-        }
-    }
-
-    private fun firebaseAuthWithGoogle(idToken: String?) {
-        val credential = GoogleAuthProvider.getCredential(idToken, null)
-        mAuth!!.signInWithCredential(credential)
-            .addOnCompleteListener(this) { task: Task<AuthResult?> ->
-                if (task.isSuccessful) {
-                    val user = mAuth!!.currentUser
-                    Log.d("LoginActivity", "Usuário conectado: " + user?.email)
-                    Toast.makeText(this, "Login bem-sucedido: ${user?.email}", Toast.LENGTH_SHORT).show()
-
-                    // Redireciona para o HomeActivity
-                    val intent = Intent(this@LoginActivity, HomeActivity::class.java)
-                    startActivity(intent)
-                    finish() // Finaliza o LoginActivity
-                } else {
-                    Log.w("LoginActivity", "Erro na autenticação com Firebase", task.exception)
-                    Toast.makeText(this, "Autenticação falhou.", Toast.LENGTH_SHORT).show()
-                }
+            try {
+                val task = GoogleSignIn.getSignedInAccountFromIntent(data)
+                val account = task.getResult(ApiException::class.java)
+                account?.let { viewModel.handleGoogleSignInResult(it) }
+            } catch (e: ApiException) {
+                viewModel.resetState()
+                Log.e("LoginActivity", "Google sign in failed", e)
             }
+        }
+    }
+
+    private fun navigateToHome() {
+        startActivity(Intent(this, HomeActivity::class.java))
+        finish()
+    }
+
+    private fun showError(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+    }
+
+    private fun showLoading() {
+        // Implementar um indicador de carregamento, se necessário
     }
 
     companion object {
         private const val RC_SIGN_IN = 100
     }
 }
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

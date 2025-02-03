@@ -39,7 +39,7 @@ fun InfoScreen(navController: NavController) {
         TopAppBar(
             title = { Text("Informação da Conta", fontWeight = FontWeight.Bold, fontSize = 20.sp) },
             navigationIcon = {
-                IconButton(onClick = { navController.navigate("notas")}) {
+                IconButton(onClick = { navController.navigate("mais")}) {
                     Icon(
                         imageVector = Icons.Filled.ArrowBackIosNew,
                         contentDescription = "Pesquisar"

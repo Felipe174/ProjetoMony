@@ -1,5 +1,8 @@
 package com.example.mony.feature.notas
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -11,8 +14,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -28,17 +33,28 @@ fun NotasItem(
     onLongClick: () -> Unit,
     isSelected: Boolean
 ) {
+    // Definindo animações para a mudança de estado de seleção
+    val backgroundColor by animateColorAsState(
+        targetValue = if (isSelected) Color.LightGray else Color.White
+    )
+
+    val alpha by animateFloatAsState(
+        targetValue = if (isSelected) 0.9f else 1f,
+        animationSpec = tween(durationMillis = 200)
+    )
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(2.dp)
             .clickable(onClick = onClick)
-            .background(if (isSelected) Color.LightGray else Color.White)
+            .background(backgroundColor) // Usando animação para o fundo
             .pointerInput(Unit) {
                 detectTapGestures(
-                    onLongPress = { onLongClick() } // Chama a função de clique longo
+                    onLongPress = { onLongClick() } // Lida com o clique longo
                 )
-            },
+            }
+            .graphicsLayer(alpha = alpha), // Aplicando a animação de opacidade
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(

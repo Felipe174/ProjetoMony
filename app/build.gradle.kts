@@ -31,7 +31,7 @@ android {
         create("release") {
             keyAlias = "MyKey"
             keyPassword = "718293"
-            storeFile = file("C:/Users/felip/keystores/my-release-key.jks")
+            storeFile = file("keystore/my-release-key.jks")
             storePassword = "718293"
     }
 
