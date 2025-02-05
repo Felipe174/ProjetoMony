@@ -1,8 +1,10 @@
 package com.example.mony.feature.home
 
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -11,30 +13,32 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -43,10 +47,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.ArrowForwardIos
+import androidx.compose.material.icons.filled.BuildCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -56,95 +61,99 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItemDefaults.contentColor
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SelectableChipColors
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItemColors
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.glance.GlanceTheme.colors
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.example.mony.feature.home.classe.Expense
 import com.example.mony.feature.home.classe.ExpenseItem
+import com.example.mony.feature.home.classe.TransactionType
 import com.example.mony.feature.home.dialog.AddDialog
 import com.example.mony.feature.home.viewmodel.HomeViewModel
 import com.example.mony.feature.utils.AppState
 import com.example.mony.feature.utils.navegation.MyApp
 import com.example.mony.feature.utils.navegation.topLevelDestinations
-import com.example.mony.ui.theme.Amarelo
 import com.example.mony.ui.theme.AmareloClaro
-import com.example.mony.ui.theme.AmareloClaro2
 import com.example.mony.ui.theme.AmareloDark
 import com.example.mony.ui.theme.AmareloMC
 import com.example.mony.ui.theme.AmareloMedio
 import com.example.mony.ui.theme.Gray
-import com.example.mony.ui.theme.OrangeLight
+import com.example.mony.ui.theme.GreenLight
+import com.example.mony.ui.theme.RedLight
 import com.example.mony.ui.theme.White
+import com.google.firebase.database.core.Context
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import kotlin.math.max
+
 
 class HomeActivity : ComponentActivity() {
-    private lateinit var homeViewModel: HomeViewModel
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        homeViewModel = HomeViewModel()
         setContent {
             Surface {
                 MyApp()
             }
         }
     }
-}@OptIn(ExperimentalMaterial3Api::class)
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
     var showAddExpenseDialog by remember { mutableStateOf(false) }
     var selectedFilter by remember { mutableStateOf("Semana") }
-    var currentDate by remember { mutableStateOf(System.currentTimeMillis()) }
+    var currentDate by remember { mutableLongStateOf(System.currentTimeMillis()) }
     val selectedItems = remember { mutableStateListOf<Expense>() }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showCheckboxes by remember { mutableStateOf(false) }
+    val expenses by homeViewModel.expenses.collectAsState()
 
     LaunchedEffect(Unit) {
-        homeViewModel.loadExpenses()
+        if (expenses.isEmpty()) {
+            homeViewModel.loadExpenses()
+        }
     }
 
-    val expenses by homeViewModel.expenses.collectAsState()
     val filteredExpenses = filterExpensesByPeriod(expenses, currentDate, selectedFilter)
 
     NavigationSuiteScaffold(
@@ -169,11 +178,12 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
         }
     ) {
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().background(White),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             TopAppBar(
+                modifier = Modifier.padding(bottom = 30.dp),
                 title = {},
                 actions = {
                     if (selectedItems.isNotEmpty()) {
@@ -182,11 +192,12 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
                         }
                     }
                     IconButton(onClick = { showAddExpenseDialog = true }) {
-                        Icon(imageVector = Icons.Filled.Add, contentDescription = "Adicionar")
+                        Icon(imageVector = Icons.Filled.BuildCircle, contentDescription = "Adicionar")
                     }
                 },
                 colors = topAppBarColors(White)
             )
+
 
             Scaffold {
                 LazyColumn(
@@ -199,19 +210,90 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(48.dp)
-                                .padding(start = 5.dp, end = 5.dp)
+                                .height(90.dp)
+                                .padding(start = 10.dp, end = 10.dp)
                         ) {
-                            Column(Modifier.padding(start = 5.dp)) {
-                                Text("Dinheiro", fontSize = 23.sp, fontWeight = FontWeight.Bold)
-                                val animatedBalance by animateFloatAsState(
-                                    targetValue = expenses.sumOf { it.amount }.toFloat()
-                                )
+                            Card(
+                                colors = CardDefaults.cardColors(White),
+                                modifier = Modifier
+                                    .width(170.dp)
+                                    .fillMaxHeight()
+                                    .align(Alignment.CenterVertically)
+                                    .border(
+                                        width = 2.dp, // Espessura do contorno
+                                        color = AmareloClaro, // Cor do contorno
+                                        shape = RoundedCornerShape(12.dp) // Forma do contorno (arredondada aqui)
+                                    ),
+                                elevation = CardDefaults.cardElevation(2.dp)
+
+                            ) {
+
+
+                                Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+                                    val animatedBalance by animateFloatAsState(
+                                        targetValue = expenses.sumOf { it.amount }.toFloat()
+                                    )
+
+                                    Text(
+                                        "Renda",
+                                        fontSize = 15.sp,
+                                        color = Gray,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier=Modifier.padding(5.dp)
+                                    )
+                                    Text(
+                                        formatCurrency(expenses.filter { it.type.isIncome }.sumOf { it.amount }),
+                                        fontSize = 29.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = GreenLight,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.padding(top=10.dp)
+
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(35.dp))
+
+                            Card(
+                                colors = CardDefaults.cardColors(White),
+                                modifier = Modifier
+                                    .width(170.dp)
+                                    .fillMaxHeight()
+                                    .padding(end = 5.dp)
+                                    .background(White)
+                                    .align(Alignment.CenterVertically)
+                                    .border(
+                                        width = 2.dp, // Espessura do contorno
+                                        color = AmareloClaro, // Cor do contorno
+                                        shape = RoundedCornerShape(12.dp) // Forma do contorno (arredondada aqui)
+                                    ),
+                                elevation = CardDefaults.cardElevation(2.dp)
+                            ) {
                                 Text(
-                                    formatCurrency(animatedBalance.toDouble()),
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Light
+                                    "Gasto",
+                                    fontSize = 20.sp,
+                                    color = Gray,
+                                    fontWeight = FontWeight.Light,
+                                    modifier=Modifier.padding(5.dp)
                                 )
+
+                                Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+
+                                    val totalIncome = remember(expenses) { expenses.filter { it.type.isIncome }.sumOf { it.amount } }
+                                    val totalExpenses = remember(expenses) { expenses.filter { !it.type.isIncome }.sumOf { it.amount } }
+
+                                    val animatedIncome by animateFloatAsState(totalIncome.toFloat())
+                                    val animatedExpense by animateFloatAsState(totalExpenses.toFloat())
+
+                                    Text(
+                                        formatCurrency(expenses.filter { !it.type.isIncome }.sumOf { it.amount }),
+                                        fontSize = 29.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = RedLight,
+                                        modifier = Modifier.padding(top=10.dp)
+                                    )
+                                }
                             }
                             Spacer(modifier = Modifier.weight(1f))
                         }
@@ -222,39 +304,51 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
                         HomeWithGraph(
                             selectedFilter = selectedFilter,
                             currentDate = currentDate,
-                            expensesData = expenses,
+                            expenses = expenses,
                             onDateChange = { newDate -> currentDate = newDate },
                             onFilterChange = { newFilter -> selectedFilter = newFilter }
                         )
                     }
 
                     items(filteredExpenses, key = { it.id }) { expense ->
+                        val isSelected = selectedItems.contains(expense)
+                        val alpha by animateFloatAsState(if (isSelected) 0.5f else 1f)
+
                         AnimatedVisibility(
-                            visible = true, // Aqui você pode condicionar a visibilidade se desejar
-                            enter = fadeIn(animationSpec = tween(durationMillis = 300)) + slideInVertically(),
-                            exit = fadeOut(animationSpec = tween(durationMillis = 300)) + slideOutVertically()
+                            visible = true,
+                            enter = fadeIn() + slideInVertically(),
+                            exit = fadeOut() + slideOutVertically()
                         ) {
-                            // Animação de opacidade para itens de despesa já existente (mantém o seu alpha)
-                            val alpha by animateFloatAsState(
-                                targetValue = if (selectedItems.contains(expense)) 0.5f else 1f,
-                                animationSpec = tween(durationMillis = 300)
-                            )
-                            Box(modifier = Modifier.graphicsLayer(alpha = alpha)) {
+                            Box(
+                                modifier = Modifier
+                                    .graphicsLayer(alpha = alpha)
+                                    .combinedClickable(
+                                        onClick = {
+                                            if (showCheckboxes) {
+                                                if (isSelected) selectedItems.remove(expense)
+                                                else selectedItems.add(expense)
+                                            }
+                                        },
+                                        onLongClick = {
+                                            if (!isSelected) {
+                                                selectedItems.add(expense)
+                                                showCheckboxes = true
+                                            }
+                                        }
+                                    )
+                            ) {
                                 ExpenseItem(
                                     expense = expense,
-                                    isSelected = selectedItems.contains(expense),
-                                    onSelect = { isSelected ->
-                                        if (isSelected) {
-                                            selectedItems.add(expense)
-                                        } else {
-                                            selectedItems.remove(expense)
-                                        }
+                                    isSelected = isSelected,
+                                    onSelect = { selected ->
+                                        if (selected) selectedItems.add(expense)
+                                        else selectedItems.remove(expense)
                                     },
                                     onLongPress = {
-                                        if (!selectedItems.contains(expense)) {
+                                        if (!isSelected) {
                                             selectedItems.add(expense)
+                                            showCheckboxes = true
                                         }
-                                        showCheckboxes = true
                                     }
                                 )
                             }
@@ -288,15 +382,16 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
                 AddDialog(
                     showDialog = showAddExpenseDialog,
                     onDismiss = { showAddExpenseDialog = false },
-                    homeViewModel = homeViewModel,
-                    onAdd = { amount, type, transactionType, date ->
+                    onAdd = { amount, type, date ->
+
                         val newExpense = Expense(
                             id = "",
-                            date = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).parse(date)?.time
-                                ?: System.currentTimeMillis(),
                             amount = amount,
-                            type = type
+                            date = date,
+                            type = type,
+                            description = ""
                         )
+                        // Chama o método addExpense do ViewModel para adicionar a despesa
                         homeViewModel.addExpense(newExpense)
                         showAddExpenseDialog = false
                     }
@@ -323,7 +418,7 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
             text = { Text("Deseja excluir os itens selecionados?") },
             confirmButton = {
                 TextButton(onClick = {
-                    selectedItems.forEach { homeViewModel.deleteExpense(it) }
+                    selectedItems.forEach { homeViewModel.deleteExpense(it.id) }
                     selectedItems.clear()
                     showDeleteDialog = false
                 }) { Text("Sim") }
@@ -332,6 +427,8 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
         )
     }
 }
+
+
 @Composable
 fun BtnAdicionar(onClick: () -> Unit, modifier: Modifier = Modifier) {
     var rotated by remember { mutableStateOf(false) }
@@ -371,91 +468,65 @@ fun BtnAdicionar(onClick: () -> Unit, modifier: Modifier = Modifier) {
 fun HomeWithGraph(
     selectedFilter: String,
     currentDate: Long,
-    expensesData: List<Expense>,
+    expenses: List<Expense>,
     onDateChange: (Long) -> Unit,
     onFilterChange: (String) -> Unit
 ) {
-    // Se nenhum filtro estiver selecionado, defina "Semana" como padrão
     val effectiveFilter = if (selectedFilter.isEmpty()) "Semana" else selectedFilter
-    val filteredExpenses = filterExpensesByPeriod(expensesData, currentDate, effectiveFilter)
 
-    // Animação para o total de despesas
-    val totalAmount = filteredExpenses.sumOf { it.amount }
-    val animatedTotal by animateFloatAsState(
-        targetValue = totalAmount.toFloat(),
-        animationSpec = tween(durationMillis = 500)
-    )
+    val chartData = remember(currentDate, effectiveFilter, expenses) {
+        getChartData(
+            expenses = expenses,
+            currentDate = currentDate,
+            filter = effectiveFilter
+        )
+    }
 
     Column(
         modifier = Modifier.fillMaxSize().padding(start = 5.dp, end = 5.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        FilterChip(
-            selectedFilter = effectiveFilter,
-            onFilterChange = onFilterChange
-        )
-
         DateSelectors(
             currentDate = currentDate,
             selectedFilter = effectiveFilter,
             onDateChange = onDateChange,
         )
 
-        Spacer(modifier = Modifier.height(10.dp))
+
+        Spacer(modifier = Modifier.height(3.dp))
 
         ElevatedCard(
-            colors = CardDefaults.cardColors(White),
-            elevation = CardDefaults.cardElevation(
-                defaultElevation = 3.dp,
-            ),
             modifier = Modifier
-                .size(width = 500.dp, height = 310.dp)
+                .size(width = 600.dp, height = 310.dp)
                 .padding(5.dp)
-                .border(
-                    width = 2.dp, // Espessura do contorno
-                    color = AmareloClaro, // Cor do contorno
-                    shape = RoundedCornerShape(12.dp) // Forma do contorno (arredondada aqui)
-                ),
-        ) {
-            Column(modifier = Modifier.fillMaxWidth().padding(start = 15.dp, top = 15.dp, end = 15.dp), horizontalAlignment = Alignment.Start) {
-                Text(
-                    text = String.format("%.2f€", animatedTotal), // Formatação para duas casas decimais
-                    fontSize = 29.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    modifier = Modifier.padding(start = 7.dp, bottom = 5.dp),
-                    text = "Renda",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
+                .border(2.dp, AmareloClaro, RoundedCornerShape(12.dp)),
+            colors = CardDefaults.cardColors(White),
 
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(start = 10.dp, end = 10.dp).height(200.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                // Animação do gráfico
+        ) {
+            Column(Modifier.padding(15.dp)) {
+                Spacer(modifier = Modifier.height(8.dp))
+
                 BarChart(
-                    data = filteredExpenses.map { it.amount },
+                    data = chartData,
                     selectedFilter = effectiveFilter,
                     modifier = Modifier.fillMaxSize()
                 )
             }
         }
-        Spacer(modifier = Modifier.height(15.dp))
+        Spacer(modifier = Modifier.height(6.dp))
+        FilterChip(
+            selectedFilter = effectiveFilter,
+            onFilterChange = onFilterChange
+        )
     }
 }
 
-
 @Composable
 fun BarChart(
-    data: List<Double>,
+    data: List<Pair<Double, Double>>, // Pair<Ganhos, Perdas>
     selectedFilter: String,
-    barColor: Color = Color.Green,
     modifier: Modifier = Modifier
 ) {
-    // Rótulos conforme o filtro selecionado
     val labels = when (selectedFilter) {
         "Semana" -> listOf("Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom")
         "Mês" -> (1..4).map { "Semana $it" }
@@ -463,75 +534,71 @@ fun BarChart(
         else -> emptyList()
     }
 
-    // Animação das alturas de cada barra
-    val animatedData = data.map { value ->
-        animateFloatAsState(
-            targetValue = value.toFloat(),
-            animationSpec = tween(durationMillis = 500)
-        ).value
-    }
-
-    // Estado para armazenar o índice da barra selecionada (tooltip)
     var selectedBarIndex by remember { mutableStateOf<Int?>(null) }
-    // Estado para armazenar a posição do tooltip (calculada fora do Canvas)
-    var tooltipPosition by remember { mutableStateOf(Offset.Zero) }
+    val tooltipPosition by remember { mutableStateOf(Offset.Zero) }
 
     Box(modifier = modifier) {
-        // Canvas desenha as barras e detecta toques
         Canvas(
             modifier = Modifier
                 .fillMaxSize()
                 .pointerInput(Unit) {
                     detectTapGestures { tapOffset ->
-                        var barraSelecionada: Int? = null
                         val canvasWidth = size.width
                         val canvasHeight = size.height
                         val barSpacing = canvasWidth / (data.size + 1)
-                        val barWidth = barSpacing * 0.6f
+                        val barWidth = barSpacing * 0.4f
 
-                        data.forEachIndexed { index, _ ->
-                            val value = animatedData.getOrNull(index) ?: 0f
-                            val maxValue = data.maxOrNull() ?: 1.0
-                            val barHeight = (value / maxValue * canvasHeight)
+                        selectedBarIndex = data.indices.firstOrNull { index ->
                             val barLeft = barSpacing * (index + 1) - barWidth / 2
-                            val barTop = canvasHeight - barHeight
-
-                            if (tapOffset.x in barLeft..(barLeft + barWidth) &&
-                                tapOffset.y in barTop..canvasHeight.toDouble()
-                            ) {
-                                barraSelecionada = index
-                                // Calcula a posição do tooltip (centralizado acima da barra)
-                                tooltipPosition = Offset(barLeft + barWidth / 2, barTop.toFloat())
-                            }
+                            val barRight = barLeft + barWidth
+                            tapOffset.x in barLeft..barRight
                         }
-                        selectedBarIndex = barraSelecionada
                     }
                 }
         ) {
             val canvasWidth = size.width
             val canvasHeight = size.height
-            val barSpacing = canvasWidth / (data.size + 1)
-            val barWidth = barSpacing * 0.6f
-            val maxValue = data.maxOrNull() ?: 1.0
+            val baseline = canvasHeight / 2
 
-            animatedData.forEachIndexed { index, value ->
-                val barHeight = (value / maxValue * canvasHeight)
+            // Linha de base
+            drawLine(
+                color = Color.Gray,
+                start = Offset(0f, baseline),
+                end = Offset(canvasWidth, baseline),
+                strokeWidth = 2f
+            )
+
+            val maxGain = data.maxOfOrNull { it.first } ?: 1.0
+            val maxLoss = data.maxOfOrNull { it.second } ?: 1.0
+            val maxValue = max(maxGain, maxLoss)
+
+            data.forEachIndexed { index, (gain, loss) ->
+                val barSpacing = canvasWidth / (data.size + 1)
+                val barWidth = barSpacing * 0.4f
                 val barLeft = barSpacing * (index + 1) - barWidth / 2
-                val barTop = canvasHeight - barHeight
 
-                // Desenha a barra
+                // Ganhos (acima da linha)
+                val gainHeight = (gain / maxValue) * (baseline - 20f)
                 drawRect(
-                    color = barColor,
-                    topLeft = Offset(barLeft, barTop.toFloat()),
-                    size = Size(barWidth, barHeight.toFloat())
+                    color = GreenLight,
+                    topLeft = Offset(barLeft, (baseline - gainHeight).toFloat()),
+                    size = Size(barWidth, gainHeight.toFloat())
                 )
 
-                // Desenha o rótulo do eixo X abaixo de cada barra
+                // Perdas (abaixo da linha)
+                val lossHeight = (loss / maxValue) * (baseline - 20f)
+                drawRect(
+                    color = RedLight,
+                    topLeft = Offset(barLeft, baseline),
+                    size = Size(barWidth, lossHeight.toFloat())
+                )
+
+                // Rótulos
                 labels.getOrNull(index)?.let { label ->
                     drawContext.canvas.nativeCanvas.drawText(
                         label,
                         barLeft + barWidth / 2,
-                        canvasHeight + 20.dp.toPx(),
+                        canvasHeight - 8.dp.toPx(),
                         android.graphics.Paint().apply {
                             textSize = 36f
                             color = android.graphics.Color.BLACK
@@ -542,39 +609,23 @@ fun BarChart(
             }
         }
 
-        // Exibe o tooltip fora do Canvas (na camada superior do Box)
+        // Tooltip
         selectedBarIndex?.let { index ->
-            AnimatedVisibility(
-                visible = true,
-                enter = fadeIn(animationSpec = tween(300)) + scaleIn(animationSpec = tween(300)),
-                exit = fadeOut(animationSpec = tween(300)) + scaleOut(animationSpec = tween(300))
+            val (gain, loss) = data[index]
+            Box(
+                modifier = Modifier
+                    .offset(tooltipPosition.x.dp, tooltipPosition.y.dp)
+                    .background(Color(0xCC6200EE), RoundedCornerShape(4.dp))
+                    .padding(8.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .offset {
-                            // Posiciona o tooltip um pouco acima da barra
-                            IntOffset(
-                                tooltipPosition.x.toInt() - 40, // ajuste horizontal (metade da largura do tooltip)
-                                (tooltipPosition.y - 60).toInt() // ajuste vertical para que o tooltip fique acima
-                            )
-                        }
-                        .background(Color(0xFF6200EE), shape = RoundedCornerShape(8.dp))
-                        .padding(8.dp)
-                ) {
-                    // Exibe o valor original da barra, não o animado
-                    Text(
-                        text = data[index].toString(),
-                        color = Color.White,
-                        style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                    )
+                Column {
+                    Text("Ganhos: ${formatCurrency(gain)}", color = Color.White)
+                    Text("Perdas: ${formatCurrency(loss)}", color = Color.White)
                 }
             }
         }
     }
 }
-
-
-
 
 @Composable
 fun EnhancedTooltip (value: Double, position: Offset) {
@@ -643,6 +694,155 @@ fun FilterChip(
         }
     }
 }
+
+fun getChartData(
+    expenses: List<Expense>,
+    currentDate: Long,
+    filter: String
+): List<Pair<Double, Double>> {
+    val calendar = Calendar.getInstance().apply {
+        timeInMillis = currentDate
+        firstDayOfWeek = Calendar.MONDAY
+    }
+
+    return when (filter) {
+        "Semana" -> handleWeek(calendar, expenses)
+        "Mês" -> handleMonth(calendar, expenses)
+        "Ano" -> handleYear(calendar, expenses)
+        else -> emptyList()
+    }
+}
+
+private fun handleWeek(calendar: Calendar, expenses: List<Expense>): List<Pair<Double, Double>> {
+    val baseCalendar = calendar.cloneAsSafe()
+    baseCalendar.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
+
+    return (0..6).map { dayOffset ->
+        val dayCal = baseCalendar.cloneAsSafe().apply {
+            add(Calendar.DAY_OF_YEAR, dayOffset)
+            setToDayStart()
+        }
+
+        val endCal = dayCal.cloneAsSafe().apply {
+            add(Calendar.DAY_OF_YEAR, 1)
+            add(Calendar.MILLISECOND, -1)
+        }
+
+        calculateDailyValues(expenses, dayCal.timeInMillis, endCal.timeInMillis)
+    }
+}
+
+private fun handleMonth(calendar: Calendar, expenses: List<Expense>): List<Pair<Double, Double>> {
+    val monthCal = calendar.cloneAsSafe().apply {
+        set(Calendar.DAY_OF_MONTH, 1)
+        setToDayStart()
+    }
+
+    val endOfMonth = monthCal.getActualMaximum(Calendar.DAY_OF_MONTH)
+    val weeks = mutableListOf<Pair<Double, Double>>()
+
+    var currentWeek = 1
+    while (currentWeek <= 6) { // Máximo de 6 semanas para cobrir todos os cenários
+        val startCal = monthCal.cloneAsSafe().apply {
+            set(Calendar.WEEK_OF_MONTH, currentWeek)
+            set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
+            setToDayStart()
+        }
+
+        // Garantir que não ultrapasse o mês
+        if (startCal.get(Calendar.MONTH) != monthCal.get(Calendar.MONTH)) break
+
+        val endCal = startCal.cloneAsSafe().apply {
+            add(Calendar.DAY_OF_YEAR, 6)
+            set(Calendar.HOUR_OF_DAY, 23)
+            set(Calendar.MINUTE, 59)
+            set(Calendar.SECOND, 59)
+            set(Calendar.MILLISECOND, 999)
+        }
+
+        // Ajustar para não passar o final do mês
+        val adjustedEnd = minOf(endCal.timeInMillis, monthCal.apply {
+            set(Calendar.DAY_OF_MONTH, endOfMonth)
+        }.timeInMillis)
+
+        weeks.add(calculateWeeklyValues(expenses, startCal.timeInMillis, adjustedEnd))
+        currentWeek++
+    }
+
+    return weeks
+}
+
+private fun handleYear(calendar: Calendar, expenses: List<Expense>): List<Pair<Double, Double>> {
+    return (0..11).map { monthOffset ->
+        val monthCal = calendar.cloneAsSafe().apply {
+            set(Calendar.MONTH, calendar.get(Calendar.MONTH) + monthOffset)
+            set(Calendar.DAY_OF_MONTH, 1)
+            setToDayStart()
+        }
+
+        val endCal = monthCal.cloneAsSafe().apply {
+            set(Calendar.DAY_OF_MONTH, getActualMaximum(Calendar.DAY_OF_MONTH))
+            set(Calendar.HOUR_OF_DAY, 23)
+            set(Calendar.MINUTE, 59)
+            set(Calendar.SECOND, 59)
+            set(Calendar.MILLISECOND, 999)
+        }
+
+        calculateMonthlyValues(expenses, monthCal.timeInMillis, endCal.timeInMillis)
+    }
+}
+
+// Funções auxiliares
+private fun Calendar.cloneAsSafe(): Calendar {
+    return this.clone() as Calendar
+}
+
+private fun Calendar.setToDayStart() {
+    set(Calendar.HOUR_OF_DAY, 0)
+    set(Calendar.MINUTE, 0)
+    set(Calendar.SECOND, 0)
+    set(Calendar.MILLISECOND, 0)
+}
+
+private fun calculateDailyValues(
+    expenses: List<Expense>,
+    start: Long,
+    end: Long
+): Pair<Double, Double> {
+    val filtered = expenses.filter { it.date in start..end }
+    return Pair(
+        filtered.filter { it.type.isIncome }.sumOf { it.amount },
+        filtered.filter { !it.type.isIncome }.sumOf { it.amount }
+    )
+}
+
+private fun calculateWeeklyValues(
+    expenses: List<Expense>,
+    start: Long,
+    end: Long
+): Pair<Double, Double> {
+    val filtered = expenses.filter { it.date in start..end }
+    return Pair(
+        filtered.filter { it.type.isIncome }.sumOf { it.amount },
+        filtered.filter { !it.type.isIncome }.sumOf { it.amount }
+    )
+}
+
+private fun calculateMonthlyValues(
+    expenses: List<Expense>,
+    start: Long,
+    end: Long
+): Pair<Double, Double> {
+    val filtered = expenses.filter { it.date in start..end }
+    return Pair(
+        filtered.filter { it.type.isIncome }.sumOf { it.amount },
+        filtered.filter { !it.type.isIncome }.sumOf { it.amount }
+    )
+}
+
+
+
+
 @Composable
 fun DateSelectors(
     currentDate: Long,
@@ -681,7 +881,7 @@ fun DateSelectors(
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 5.dp)
     ) {
         IconButton(onClick = {
             when (selectedFilter) {
@@ -808,11 +1008,14 @@ fun formatCurrency(amount: Double): String {
     return formatter.format(amount)
 }
 
+
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {
-    // Crie um AppState simulado
+    // Usando um NavController simples
     val navController = rememberNavController()
-    // Chame a HomeScreen com o estado simulado
-    HomeScreen(appState = AppState(navController))
+    // Criando uma instância do AppState
+    val appState = AppState(navController)
+
+    HomeScreen(appState = AppState(navController = rememberNavController()), homeViewModel = HomeViewModel())
 }

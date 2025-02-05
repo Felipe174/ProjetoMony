@@ -4,130 +4,195 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mony.feature.home.classe.Expense
-import com.example.mony.feature.home.classe.ExpenseType
+import com.example.mony.feature.home.classe.TransactionType
 
 import com.google.android.gms.tasks.Tasks
+import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreException
+import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.QuerySnapshot
+import com.google.firebase.firestore.firestore
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import java.lang.String.valueOf
+import kotlin.coroutines.cancellation.CancellationException
+
 
 class HomeViewModel : ViewModel() {
+
+    private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
+    val authState: StateFlow<AuthState> = _authState
 
     private val _expenses = MutableStateFlow<List<Expense>>(emptyList())
     val expenses: StateFlow<List<Expense>> = _expenses
 
+    private val _uiState = MutableStateFlow<UiState>(UiState.Idle)
+    val uiState: StateFlow<UiState> = _uiState
+
+    private val auth: FirebaseAuth by lazy { Firebase.auth }
+    private val userId: String?
+        get() = auth.currentUser?.uid
+
     init {
-        loadExpenses()  // Carregar despesas quando o ViewModel for inicializado
-    }
-
-    // Função para adicionar uma despesa
-    fun addExpense(expense: Expense) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
-                // Adiciona a despesa ao Firestore e atualiza a lista local
-                addExpenseToFirestore(expense)
-                _expenses.value += expense
+                auth.currentUser?.reload()?.await()
+                _authState.value = if (auth.currentUser != null) {
+                    loadExpenses()
+                    AuthState.Authenticated
+                } else {
+                    AuthState.Unauthenticated
+                }
             } catch (e: Exception) {
-                Log.e("HomeViewModel", "Erro ao adicionar despesa: ${e.message}")
+                _authState.value = AuthState.Error("Falha na verificação de autenticação")
             }
         }
     }
 
-    // Função para carregar todas as despesas do Firestore
-    fun loadExpenses() {
-        viewModelScope.launch {
-            try {
-                _expenses.value = getExpensesFromFirestore()
-            } catch (e: Exception) {
-                Log.e("HomeViewModel", "Erro ao carregar despesas: ${e.message}")
-            }
-        }
+    sealed interface UiState {
+        object Idle : UiState
+        object Loading : UiState
+        data class Success(val message: String? = null) : UiState
+        data class Error(val message: String) : UiState
     }
 
-    // Função para excluir uma despesa
-    fun deleteExpense(expense: Expense) {
-        if (expense.id.isBlank()) {
-            Log.e("HomeViewModel", "Erro: ID da despesa está vazio. Não é possível excluir.")
-            return
-        }
-
-        viewModelScope.launch {
-            try {
-                deleteExpenseFromFirestore(expense)
-                // Atualiza a lista local removendo a despesa
-                _expenses.value = _expenses.value.filter { it.id != expense.id }
-                Log.d("HomeViewModel", "Despesa excluída com sucesso na lista local.")
-            } catch (e: Exception) {
-                Log.e("HomeViewModel", "Erro ao excluir despesa: ${e.message}")
-            }
-        }
+    sealed class AuthState {
+        object Authenticated : AuthState()
+        object Unauthenticated : AuthState()
+        object Loading : AuthState()
+        data class Error(val message: String) : AuthState()
     }
 
-    private suspend fun addExpenseToFirestore(expense: Expense) {
-        val firestore = FirebaseFirestore.getInstance()
+    fun addExpense(expense: Expense) = viewModelScope.launch {
+        _uiState.value = UiState.Loading
+
+        val currentUserId = userId ?: run {
+            _authState.value = AuthState.Unauthenticated
+            return@launch
+        }
+
         try {
-            // Adiciona a despesa ao Firestore
-            firestore.collection("expenses").add(mapOf(
-                "date" to expense.date,
-                "amount" to expense.amount,
-                "type" to mapOf(
-                    "imageResId" to expense.type.imageResId,
-                    "name" to expense.type.name,
-                    "isGain" to expense.type.isGain
-                )
-            )).await()
-
-            Log.d("HomeViewModel", "Despesa adicionada com sucesso ao Firestore.")
-        } catch (e: Exception) {
-            Log.e("HomeViewModel", "Erro ao adicionar despesa ao Firestore: ${e.message}")
-            throw e
-        }
-    }
-
-
-    private suspend fun getExpensesFromFirestore(): List<Expense> {
-        val firestore = FirebaseFirestore.getInstance()
-        return try {
-            val snapshot = firestore.collection("expenses").get().await()
-            snapshot.documents.map { document ->
-                // Obtendo os dados do documento
-                val data = document.data ?: emptyMap<String, Any>()
-                val expenseTypeMap = data["type"] as? Map<String, Any>
-
-                // Convertendo para objetos
-                Expense(
-                    id = document.id,  // ID gerado automaticamente pelo Firestore
-                    date = data["date"] as? Long ?: 0L,
-                    amount = data["amount"] as? Double ?: 0.0,
-                    type = ExpenseType(
-                        imageResId = expenseTypeMap?.get("imageResId") as? Int ?: 0,
-                        name = expenseTypeMap?.get("name") as? String ?: "",
-                        isGain = expenseTypeMap?.get("isGain") as? Boolean ?: false
-                    )
-                )
+            with(expense) {
+                require(amount >= 0) { "Valor não pode ser negativo" }
+                require(date in 1..System.currentTimeMillis()) { "Data inválida" }
             }
-        } catch (e: Exception) {
-            Log.e("HomeViewModel", "Erro ao buscar despesas do Firestore: ${e.message}")
-            emptyList()
-        }
-    }
 
+            val expenseMap = expense.toFirestoreMap()
 
-    // Função para excluir uma despesa no Firestore
-    private suspend fun deleteExpenseFromFirestore(expense: Expense) {
-        val firestore = FirebaseFirestore.getInstance()
-        if (expense.id.isNotEmpty()) {
-            try {
-                firestore.collection("expenses").document(expense.id).delete().await()
-                Log.d("HomeViewModel", "Despesa excluída com sucesso: ${expense.id}")
-            } catch (e: Exception) {
-                Log.e("HomeViewModel", "Erro ao excluir despesa do Firestore: ${e.message}")
-                throw e
+            Firebase.firestore.collection("users")
+                .document(currentUserId)
+                .collection("transactions")
+                .add(expenseMap)
+                .await()
+
+            _expenses.update { currentList ->
+                currentList + expense.copy(id = expense.id)
             }
-        } else {
-            Log.e("HomeViewModel", "ID da despesa está vazio, não é possível excluir.")
+
+            _uiState.value = UiState.Success("Despesa adicionada com sucesso!")
+
+        } catch (e: Exception) {
+            handleFirestoreError(e, "Erro ao adicionar despesa")
         }
     }
+
+    fun loadExpenses() = viewModelScope.launch(Dispatchers.IO) {
+        _uiState.value = UiState.Loading
+
+        val currentUserId = userId ?: run {
+            _authState.value = AuthState.Unauthenticated
+            return@launch
+        }
+
+        try {
+            val snapshot = Firebase.firestore.collection("users")
+                .document(currentUserId)
+                .collection("transactions")
+                .orderBy("date", Query.Direction.DESCENDING)
+                .get()
+                .await()
+
+            val expensesList = snapshot.documents.mapNotNull { doc ->
+                try {
+                    doc.getString("type")?.let { TransactionType.valueOf(it) }?.let {
+                        Expense(
+                            id = doc.id,
+                            amount = doc.getDouble("amount") ?: 0.0,
+                            date = doc.getLong("date") ?: System.currentTimeMillis(),
+                            type = it,
+                            description = doc.getString("description") ?: ""
+                        )
+                    }
+                } catch (e: Exception) {
+                    Log.w("HomeVM", "Documento corrompido: ${doc.id}", e)
+                    null
+                }
+            }
+
+            _expenses.value = expensesList
+            _uiState.value = if (expensesList.isEmpty()) {
+                UiState.Success("Nenhuma despesa encontrada")
+            } else {
+                UiState.Success()
+            }
+
+        } catch (e: Exception) {
+            handleFirestoreError(e, "Falha ao carregar despesas")
+        }
+    }
+
+    fun deleteExpense(expenseId: String) = viewModelScope.launch(Dispatchers.IO) {
+        _uiState.value = UiState.Loading
+
+        val currentUserId = userId ?: run {
+            _authState.value = AuthState.Unauthenticated
+            return@launch
+        }
+
+        try {
+            Firebase.firestore.collection("users")
+                .document(currentUserId)
+                .collection("transactions")
+                .document(expenseId)
+                .delete()
+                .await()
+
+            _expenses.update { it.filterNot { e -> e.id == expenseId } }
+            _uiState.value = UiState.Success("Despesa removida com sucesso")
+
+        } catch (e: Exception) {
+            handleFirestoreError(e, "Erro ao excluir despesa")
+        }
+    }
+
+    private fun handleFirestoreError(e: Exception, context: String) {
+        Log.e("HomeVM", "$context: ${e.stackTraceToString()}")
+
+        val errorMessage = when (e) {
+            is FirebaseFirestoreException -> when (e.code) {
+                FirebaseFirestoreException.Code.PERMISSION_DENIED -> "Acesso negado"
+                FirebaseFirestoreException.Code.UNAVAILABLE -> "Serviço indisponível"
+                else -> "Erro no banco de dados"
+            }
+            is CancellationException -> "Operação cancelada"
+            is IllegalArgumentException -> "Dados inválidos: ${e.message}"
+            else -> "Erro: ${e.localizedMessage ?: "Desconhecido"}"
+        }
+
+        _uiState.value = UiState.Error(errorMessage)
+    }
+
+    private fun Expense.toFirestoreMap() = mapOf(
+        "amount" to amount,
+        "date" to date,
+        "type" to type.name,
+        "description" to description
+    )
 }

@@ -20,8 +20,8 @@ android {
 
     defaultConfig {
         applicationId = "com.example.mony"
-        minSdk = 23
-        targetSdk = 34
+        minSdk = 24
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -60,6 +60,7 @@ android {
             excludes += "META-INF/versions/9/OSGI-INF/MANIFEST.MF"
         }
     }
+    buildToolsVersion = "35.0.0"
     configurations.all {
         resolutionStrategy {
             force("androidx.test.espresso:espresso-core:3.6.1")

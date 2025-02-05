@@ -1,5 +1,6 @@
 package com.example.mony.feature.utils.navegation
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,13 +32,16 @@ import com.example.mony.feature.conta.menu.HelpScreen
 import com.example.mony.feature.conta.menu.InfoScreen
 import com.example.mony.feature.conta.menu.SecureScreen
 import com.example.mony.feature.conta.viewmodel.ContaViewModel
+import com.example.mony.feature.home.ExpenseDetailScreen
 import com.example.mony.feature.home.HomeScreen
+import com.example.mony.feature.home.viewmodel.HomeViewModel
 import com.example.mony.feature.notas.NotaDetalhes
 import com.example.mony.feature.notas.NotasScreen
 import com.example.mony.feature.notas.NoteEditor
 import com.example.mony.feature.notas.viewmodel.NotesViewModel
 import com.example.mony.feature.utils.AppState
 
+@SuppressLint("StateFlowValueCalledInComposition")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyApp() {
@@ -46,11 +50,30 @@ fun MyApp() {
     val appState = remember { AppState(navController) }
     val notesViewModel: NotesViewModel = viewModel()
     val contaViewModel: ContaViewModel = viewModel()
+    val homeViewModel: HomeViewModel = viewModel()
 
     // Configura o NavHost com o NavController e o destino inicial
     NavHost(navController = navController, startDestination = "home") {
         // Tela inicial (Home)
         composable("home") { HomeScreen(appState) }
+
+        // Tela de Detalhes da Despesa
+        composable(
+            route = "expenseDetail/{expenseId}",
+            arguments = listOf(navArgument("expenseId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val expenseId = backStackEntry.arguments?.getString("expenseId") ?: ""
+            val expense = homeViewModel.expenses.value.find { it.id == expenseId }
+
+            if (expense != null) {
+                ExpenseDetailScreen(
+                    expense = expense,
+                    onBack = { navController.popBackStack() }
+                )
+            } else {
+                NotFoundScreen(navController)
+            }
+        }
 
         // Tela de notas
         composable("notes") {

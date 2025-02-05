@@ -22,6 +22,7 @@ class AppState(private val navController: NavController) {
         //Home
         const val ROUTE_HOME = "home"
 
+
         // Conjunto de rotas válidas
         private val validRoutes = setOf(
             ROUTE_NOTES,

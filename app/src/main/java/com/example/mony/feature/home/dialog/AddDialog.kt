@@ -2,25 +2,41 @@ package com.example.mony.feature.home.dialog
 
 import android.app.DatePickerDialog
 import android.content.Context
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
+import androidx.compose.material3.DatePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -28,214 +44,238 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.mony.R
 import com.example.mony.feature.home.classe.Expense
-import com.example.mony.feature.home.classe.ExpenseType
+import com.example.mony.feature.home.classe.TransactionType
 import com.example.mony.feature.home.classe.TypeSelectionDialog
-import com.example.mony.feature.home.classe.exampleExpenseTypes
 import com.example.mony.feature.home.viewmodel.HomeViewModel
-import com.google.firebase.Firebase
-import com.google.firebase.firestore.firestore
+import com.example.mony.ui.theme.GreenLight
+import com.example.mony.ui.theme.RedLight
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
+import java.util.Locale
+import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddDialog(
     showDialog: Boolean,
     onDismiss: () -> Unit,
-    onAdd: (Double, ExpenseType, String, String) -> Unit,
-    homeViewModel: HomeViewModel,
-    context: Context = LocalContext.current
+    onAdd: (Double, TransactionType, Long) -> Unit
 ) {
-    var newExpenseAmount by rememberSaveable { mutableStateOf("") }
-    var selectedType by rememberSaveable { mutableStateOf<ExpenseType?>(null) }
-    var showTypeDialog by rememberSaveable { mutableStateOf(false) }
-    var errorMessage by rememberSaveable { mutableStateOf("") }
-    var selectedDate by rememberSaveable { mutableStateOf("Selecionar Data") }
-
-    // Função para resetar os campos
-    fun resetFields() {
-        newExpenseAmount = ""
-        selectedType = null
-        selectedDate = "Selecionar Data"
-        errorMessage = ""
-    }
+    var amount by remember { mutableStateOf("") }
+    var selectedType by remember { mutableStateOf<TransactionType?>(null) }
+    var selectedDate by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    var showTypeDialog by remember { mutableStateOf(false) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
 
     if (showDialog) {
         AlertDialog(
-            onDismissRequest = {
-                resetFields()
-                onDismiss()
-            },
-            title = { Text(text = "Adicionar Transação", fontSize = 20.sp) },
+            onDismissRequest = onDismiss,
+            title = { Text("Adicionar Transação") },
             text = {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.Start
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Botão segmentado para tipo de transação
-                    var selectedIndex by remember { mutableStateOf(0) }
-                    val options = listOf("Ganho", "Gasto")
-                    val expenseTypes = exampleExpenseTypes()
-
-                    SingleChoiceSegmentedButton(
-                        options = options,
-                        selectedIndex = selectedIndex,
-                        onOptionSelected = { index ->
-                            selectedIndex = index
-                            selectedType = expenseTypes.find { it.name == options[index] }
-                        }
+                    AmountInput(
+                        value = amount,
+                        onValueChange = { amount = it }
                     )
 
-                    Spacer(modifier = Modifier.height(7.dp))
+                    TypeSelector(
+                        selectedType = selectedType,
+                        onSelectClick = { showTypeDialog = true }
+                    )
 
-                    Card() {
-                        // Campo de valor
-                        TextField(
-                            value = newExpenseAmount,
-                            onValueChange = { newExpenseAmount = it },
-                            label = { Text("Valor (€)") },
-                            keyboardOptions = KeyboardOptions.Default.copy(
-                                keyboardType = KeyboardType.Number
-                            ),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Botão de seleção de categoria
-                    FilledTonalButton(
-                        onClick = { showTypeDialog = true },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Categoria: ${selectedType?.name ?: "Selecione Aqui"}")
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Campo de data
-                    FilledTonalButton(
-                        onClick = {
-                            val calendar = Calendar.getInstance()
-                            DatePickerDialog(
-                                context,
-                                { _, selectedYear, selectedMonth, selectedDay ->
-                                    selectedDate = "$selectedDay/${selectedMonth + 1}/$selectedYear"
-                                },
-                                calendar.get(Calendar.YEAR),
-                                calendar.get(Calendar.MONTH),
-                                calendar.get(Calendar.DAY_OF_MONTH)
-                            ).show()
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Data: $selectedDate")
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    if (errorMessage.isNotEmpty()) {
-                        Text(text = errorMessage, color = Color.Red)
-                    }
+                    DateSelector(
+                        selectedDate = selectedDate,
+                        formatter = dateFormatter,
+                        onSelectClick = { showDatePicker = true }
+                    )
                 }
             },
             confirmButton = {
-                Button(
-                    onClick = {
-                        val amount = newExpenseAmount.toDoubleOrNull()
-                        if (amount != null && selectedType != null && selectedDate != "Selecionar Data") {
-                            val finalAmount = if (selectedType?.name == "Gasto") -amount else amount
-                            val expense = Expense(
-                                id = "",
-                                date = System.currentTimeMillis(),
-                                amount = finalAmount,
-                                type = selectedType!!
-                            )
-                            homeViewModel.addExpense(expense) // Função delegada ao ViewModel
-                            resetFields()
-                            onDismiss()
-                        } else {
-                            errorMessage = "Por favor, preencha todos os campos corretamente."
-                        }
+                ConfirmButton(
+                    enabled = selectedType != null && amount.isNotBlank(),
+                    onConfirm = {
+                        onAdd(
+                            amount.toDoubleOrNull() ?: 0.0,
+                            selectedType ?: TransactionType.BILLS,
+                            selectedDate
+                        )
+                        onDismiss()
                     }
-                ) {
-                    Text("Adicionar")
-                }
+                )
             },
             dismissButton = {
-                Button(onClick = {
-                    resetFields()
-                    onDismiss()
-                }) {
-                    Text("Cancelar")
-                }
+                DismissButton(onDismiss = onDismiss)
             }
         )
     }
 
-    // Diálogo de seleção de tipo (Categoria)
-    TypeSelectionDialog(
-        showDialog = showTypeDialog,
-        onDismiss = { showTypeDialog = false },
-        onSelect = { type ->
-            selectedType = type
-            showTypeDialog = false
-        }
+    if (showTypeDialog) {
+        TypeSelectionDialog(
+            showDialog = true,
+            onDismiss = { showTypeDialog = false },
+            onSelect = { selectedType = it }
+        )
+    }
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = selectedDate
+        )
+
+        CustomDatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let {
+                            selectedDate = it
+                        }
+                        showDatePicker = false
+                    }
+                ) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDatePicker = false }
+                ) {
+                    Text("Cancelar")
+                }
+            },
+            content = { // Nome do parâmetro corrigido
+                DatePicker(
+                    state = datePickerState
+                )
+            }
+        )
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CustomDatePickerDialog(
+    onDismissRequest: () -> Unit,
+    confirmButton: @Composable () -> Unit,
+    dismissButton: @Composable () -> Unit,
+    content: @Composable ColumnScope.() -> Unit // Renomear para content
+) {
+    androidx.compose.material3.DatePickerDialog(
+        onDismissRequest = onDismissRequest,
+        confirmButton = confirmButton,
+        dismissButton = dismissButton,
+        content = content
     )
 }
 
 @Composable
-fun SingleChoiceSegmentedButton(
-    options: List<String>,
-    selectedIndex: Int,
-    onOptionSelected: (Int) -> Unit,
-    modifier: Modifier = Modifier
+private fun AmountInput(
+    value: String,
+    onValueChange: (String) -> Unit
 ) {
-    Row(modifier = modifier) {
-        options.forEachIndexed { index, label ->
-            val backgroundColor = when (label) {
-                "Ganho" -> if (index == selectedIndex) Color(0xFF4CAF50) else Color(0xFFE8F5E9) // Verde
-                "Gasto" -> if (index == selectedIndex) Color(0xFFF44336) else Color(0xFFFFEBEE) // Vermelho
-                else -> Color.LightGray
+    OutlinedTextField(
+        value = value,
+        onValueChange = { newValue ->
+            if (newValue.matches(Regex("^\\d*(\\.\\d{0,2})?$"))) {
+                onValueChange(newValue)
             }
-            val contentColor = if (index == selectedIndex) Color.White else Color.Black
+        },
+        label = { Text("") },
+        keyboardOptions = KeyboardOptions.Default.copy(
+            keyboardType = KeyboardType.Number,
+            imeAction = ImeAction.Done
+        ),
+        modifier = Modifier.fillMaxWidth(),
+        prefix = { Text("R$") }
+    )
+}
 
-            SegmentedButton(
-                onClick = { onOptionSelected(index) },
-                selected = index == selectedIndex,
-                label = { Text(label) },
-                modifier = Modifier.weight(1f),
-                backgroundColor = backgroundColor,
-                contentColor = contentColor
-            )
-        }
+@Composable
+private fun TypeSelector(
+    selectedType: TransactionType?,
+    onSelectClick: () -> Unit
+) {
+    FilledTonalButton(
+        onClick = onSelectClick,
+        modifier = Modifier.fillMaxWidth(),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    ) {
+        Text(
+            text = selectedType?.let { stringResource(it.labelRes) } ?: "Selecione o tipo",
+            style = MaterialTheme.typography.bodyMedium
+        )
     }
 }
 
 @Composable
-fun SegmentedButton(
-    onClick: () -> Unit,
-    selected: Boolean,
-    label: @Composable () -> Unit,
-    modifier: Modifier = Modifier,
-    backgroundColor: Color,
-    contentColor: Color
+private fun DateSelector(
+    selectedDate: Long,
+    formatter: SimpleDateFormat,
+    onSelectClick: () -> Unit
+) {
+    FilledTonalButton(
+        onClick = onSelectClick,
+        modifier = Modifier.fillMaxWidth(),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    ) {
+        Icon(
+            imageVector = Icons.Default.DateRange,
+            contentDescription = "Selecione a data"
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text = "Data: ${formatter.format(Date(selectedDate))}",
+            style = MaterialTheme.typography.bodyMedium
+        )
+    }
+}
+
+@Composable
+private fun ConfirmButton(
+    enabled: Boolean,
+    onConfirm: () -> Unit
 ) {
     Button(
-        onClick = onClick,
-        colors = ButtonDefaults.buttonColors(backgroundColor),
-        modifier = modifier
+        onClick = onConfirm,
+        enabled = enabled,
+        modifier = Modifier.padding(8.dp)
     ) {
-        CompositionLocalProvider(LocalContentColor provides contentColor) {
-            label()
-        }
+        Text("Adicionar")
+    }
+}
+
+
+@Composable
+private fun DismissButton(
+    onDismiss: () -> Unit
+) {
+    TextButton(
+        onClick = onDismiss,
+        modifier = Modifier.padding(8.dp)
+    ) {
+        Text(  "Cancelar")
     }
 }
 
@@ -246,8 +286,6 @@ fun AddDialogPreview() {
     AddDialog(
         showDialog = showDialog,
         onDismiss = { showDialog = false },
-        onAdd = { _, _, _, _ -> },
-        homeViewModel = HomeViewModel(),
-        context = LocalContext.current // Para execução, remova no preview real
+        onAdd = { _, _, _ -> }
     )
 }

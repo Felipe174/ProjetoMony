@@ -17,5 +17,16 @@
     <string name="notas">Notas</string>
     <string name="arquivos">Arquivos</string>
     <string name="configuracoes">Configurações</string>
+
+    <!-- Tipos de Transação -->
+    <string name="type_income">Receita</string>
+    <string name="type_expense">Despesa</string>
+    <string name="type_food">Alimentação</string>
+    <string name="type_transport">Transporte</string>
+    <string name="type_salary">Salário</string>
+    <string name="type_entertainment">Lazer</string>
+    <string name="type_bills">Contas</string>
+    <string name="type_other">Outros</string>
+
 </resources>
 
