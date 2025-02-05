@@ -8,7 +8,6 @@ import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.MoreHoriz
 import androidx.compose.material.icons.outlined.NoteAlt
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.DefaultTintColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.mony.R
 import com.example.mony.ui.theme.AmareloClaro

@@ -1,10 +1,8 @@
 package com.example.mony.feature.home
 
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -21,11 +19,11 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -47,9 +45,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.ArrowForwardIos
-import androidx.compose.material.icons.filled.BuildCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.Hardware
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -69,7 +67,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -78,7 +75,6 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -89,7 +85,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -98,13 +94,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
+import com.example.mony.R
 import com.example.mony.feature.home.classe.Expense
 import com.example.mony.feature.home.classe.ExpenseItem
-import com.example.mony.feature.home.classe.TransactionType
 import com.example.mony.feature.home.dialog.AddDialog
 import com.example.mony.feature.home.viewmodel.HomeViewModel
 import com.example.mony.feature.utils.AppState
@@ -115,10 +109,10 @@ import com.example.mony.ui.theme.AmareloDark
 import com.example.mony.ui.theme.AmareloMC
 import com.example.mony.ui.theme.AmareloMedio
 import com.example.mony.ui.theme.Gray
+import com.example.mony.ui.theme.GrayLight
 import com.example.mony.ui.theme.GreenLight
 import com.example.mony.ui.theme.RedLight
 import com.example.mony.ui.theme.White
-import com.google.firebase.database.core.Context
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -192,7 +186,7 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
                         }
                     }
                     IconButton(onClick = { showAddExpenseDialog = true }) {
-                        Icon(imageVector = Icons.Filled.BuildCircle, contentDescription = "Adicionar")
+                        Icon(imageVector = Icons.Filled.Hardware, contentDescription = "Adicionar")
                     }
                 },
                 colors = topAppBarColors(White)
@@ -233,21 +227,35 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
                                     val animatedBalance by animateFloatAsState(
                                         targetValue = expenses.sumOf { it.amount }.toFloat()
                                     )
+                                    Row(
+                                        modifier=Modifier.fillMaxWidth()
+                                    ){
+
+                                    Spacer(modifier = Modifier.width(30.dp).padding(top=5.dp))
+
+                                    Image(
+                                        painter = painterResource(id = R.drawable.expense),
+                                        contentDescription = "Expense",
+                                        modifier = Modifier.size(15.dp).align(Alignment.CenterVertically)
+                                    )
+
+                                        Spacer(modifier = Modifier.width(5.dp))
 
                                     Text(
                                         "Renda",
                                         fontSize = 15.sp,
-                                        color = Gray,
+                                        color = GrayLight,
                                         fontWeight = FontWeight.Bold,
-                                        modifier=Modifier.padding(5.dp)
+                                        modifier=Modifier.padding(top=10.dp)
                                     )
+                                    }
                                     Text(
                                         formatCurrency(expenses.filter { it.type.isIncome }.sumOf { it.amount }),
                                         fontSize = 29.sp,
                                         fontWeight = FontWeight.Medium,
                                         color = GreenLight,
                                         textAlign = TextAlign.Center,
-                                        modifier = Modifier.padding(top=10.dp)
+                                        modifier = Modifier.padding()
 
                                     )
                                 }
@@ -270,28 +278,52 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
                                     ),
                                 elevation = CardDefaults.cardElevation(2.dp)
                             ) {
-                                Text(
-                                    "Gasto",
-                                    fontSize = 20.sp,
-                                    color = Gray,
-                                    fontWeight = FontWeight.Light,
-                                    modifier=Modifier.padding(5.dp)
-                                )
 
-                                Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+                                Column(
+                                    Modifier.fillMaxSize(),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
 
-                                    val totalIncome = remember(expenses) { expenses.filter { it.type.isIncome }.sumOf { it.amount } }
-                                    val totalExpenses = remember(expenses) { expenses.filter { !it.type.isIncome }.sumOf { it.amount } }
+                                    val totalIncome = remember(expenses) {
+                                        expenses.filter { it.type.isIncome }.sumOf { it.amount }
+                                    }
+                                    val totalExpenses = remember(expenses) {
+                                        expenses.filter { !it.type.isIncome }.sumOf { it.amount }
+                                    }
 
                                     val animatedIncome by animateFloatAsState(totalIncome.toFloat())
                                     val animatedExpense by animateFloatAsState(totalExpenses.toFloat())
 
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+
+                                        Spacer(modifier = Modifier.width(30.dp).padding(top=5.dp))
+
+                                        Image(
+                                            painter = painterResource(id = R.drawable.income),
+                                            contentDescription = "Expense",
+                                            modifier = Modifier.size(15.dp)
+                                                .align(Alignment.CenterVertically)
+                                        )
+
+                                        Spacer(modifier = Modifier.width(5.dp))
+
+                                        Text(
+                                            "Gasto",
+                                            fontSize = 15.sp,
+                                            color = GrayLight,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.padding(top = 10.dp)
+                                        )
+                                    }
                                     Text(
-                                        formatCurrency(expenses.filter { !it.type.isIncome }.sumOf { it.amount }),
+                                        formatCurrency(expenses.filter { !it.type.isIncome }
+                                            .sumOf { it.amount }),
                                         fontSize = 29.sp,
                                         fontWeight = FontWeight.Medium,
                                         color = RedLight,
-                                        modifier = Modifier.padding(top=10.dp)
+                                        modifier = Modifier
                                     )
                                 }
                             }
@@ -462,6 +494,7 @@ fun BtnAdicionar(onClick: () -> Unit, modifier: Modifier = Modifier) {
             ),
     )
 }
+
 
 
 @Composable
