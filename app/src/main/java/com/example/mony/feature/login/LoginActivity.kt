@@ -29,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -37,10 +38,13 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavController
 import com.example.mony.R
 import com.example.mony.feature.home.HomeActivity
 import com.example.mony.feature.login.viewmodel.LoginState
 import com.example.mony.feature.login.viewmodel.LoginViewModel
+import com.example.mony.feature.utils.AppState
+import com.example.mony.feature.utils.navegation.MyApp
 import com.example.mony.ui.theme.Roxo
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
@@ -85,9 +89,7 @@ class LoginActivity : ComponentActivity() {
         }
 
         setContent {
-            LoginScreen(
-                onGoogleSignInClick = { startGoogleSignIn() }
-            )
+            LoginScreen(onGoogleSignInClick = { startGoogleSignIn() })
         }
     }
 
@@ -130,7 +132,6 @@ class LoginActivity : ComponentActivity() {
     }
 }
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(onGoogleSignInClick: () -> Unit) {
@@ -171,18 +172,15 @@ fun LoginScreen(onGoogleSignInClick: () -> Unit) {
                 Text(
                     text = "Olá",
                     style = MaterialTheme.typography.headlineLarge.copy(fontSize = 55.sp),
-                   // fontFamily =
                 )
                 Text(
                     text = "Bem Vindo ao Mony",
                     style = MaterialTheme.typography.bodyMedium.copy(fontSize = 15.sp),
-                    //fontFamily = Robotomedium,
                     color = Color.Gray
                 )
                 Text(
                     text = "onde você irá gerenciar o seu dinheiro",
                     style = MaterialTheme.typography.bodyMedium.copy(fontSize = 15.sp),
-                    //fontFamily = Robotomedium,
                     color = Color.Gray
                 )
             }
@@ -209,14 +207,14 @@ fun LoginScreen(onGoogleSignInClick: () -> Unit) {
 
                 OutlinedButton(onClick = { /* Ação do botão 2 */ },
                     modifier = Modifier.width(200.dp)) {
-                    Text("Registra-se", ) }
+                    Text("Registra-se")
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
                     text = "ou faça login com",
                     style = MaterialTheme.typography.bodyMedium.copy(fontSize = 15.sp),
-                   // fontFamily = Robotomedium,
                     color = Color.Gray,
                 )
 
@@ -228,11 +226,13 @@ fun LoginScreen(onGoogleSignInClick: () -> Unit) {
                     modifier = Modifier.size(25.dp)
                         .clickable { onGoogleSignInClick() }
                 )
-
-
             }
         }
     }
+}
+fun onGoogleSignInClick(onSuccess: () -> Unit) {
+
+    onSuccess()
 }
 @Preview(showBackground = true)
 @Composable
