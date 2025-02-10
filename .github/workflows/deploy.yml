@@ -23,7 +23,8 @@ jobs:
           distribution: 'temurin'
 
       - name: Configurar versão
-        run: echo "VERSION_CODE=${{ github.event.inputs.version_code }}" >> $GITHUB_ENV
+        run: |
+          echo "VERSION_CODE=${{ github.event.inputs.version_code }}" >> $GITHUB_ENV
           echo "VERSION_NAME=${{ github.event.inputs.version_name }}" >> $GITHUB_ENV
 
       # Permissão para executar o gradlew
@@ -40,7 +41,7 @@ jobs:
 
       # Upload para Firebase App Distribution
       - name: Upload to Firebase App Distribution
-        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        uses: wzieba/Firebase-Distribution-Github-Action@v2
         with:
           appId: ${{ secrets.FIREBASE_APP_ID }}
           serviceCredentialsFileContent: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
