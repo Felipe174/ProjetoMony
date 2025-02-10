@@ -19,8 +19,8 @@ android {
         applicationId = "com.example.mony"
         minSdk = 24
         targetSdk = 35
-        versionCode = System.getenv("VERSION_CODE")?.toInt() ?: 1
-        versionName = System.getenv("VERSION_NAME") ?: "1.2.0"
+        versionCode = (System.getenv("VERSION_CODE")?.toDouble() ?: 1) as Int?
+        versionName = System.getenv("VERSION_NAME") ?: "1.20"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
