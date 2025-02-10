@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "com.example.mony"
-    compileSdk = 35 // Versão atual do SDK estável
+    compileSdk = 35
 
     buildFeatures {
         compose = true
@@ -19,8 +19,8 @@ android {
         applicationId = "com.example.mony"
         minSdk = 24
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = System.getenv("VERSION_CODE")?.toInt() ?: 1
+        versionName = System.getenv("VERSION_NAME") ?: "1.2.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

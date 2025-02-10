@@ -177,7 +177,7 @@ private fun AmountInput(
             imeAction = ImeAction.Done
         ),
         modifier = Modifier.fillMaxWidth(),
-        prefix = { Text("R$") }
+        prefix = { Text("€") }
     )
 }
 

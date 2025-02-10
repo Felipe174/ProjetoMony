@@ -35,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Color.Companion.Red
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -54,7 +55,10 @@ import com.example.mony.feature.utils.AppState
 import com.example.mony.feature.utils.navegation.MyApp
 import com.example.mony.feature.utils.navegation.topLevelDestinations
 import com.example.mony.ui.theme.Amarelo
+import com.example.mony.ui.theme.AmareloMC
+import com.example.mony.ui.theme.Black
 import com.example.mony.ui.theme.RedLight
+import com.example.mony.ui.theme.White
 import com.google.firebase.auth.FirebaseAuth
 
 class ContaActivity : ComponentActivity() {
@@ -74,6 +78,7 @@ fun ContaScreen(appState: AppState, navController: NavController, contaViewModel
     val userProfile = contaViewModel.userProfile.collectAsState().value
 
     NavigationSuiteScaffold(
+        containerColor = White,
         navigationSuiteItems = {
             topLevelDestinations.forEach { destination ->
                 val selected = appState.isRouteInHierarchy(
@@ -124,7 +129,7 @@ fun ContaScreen(appState: AppState, navController: NavController, contaViewModel
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(top = 35.dp),
-                color = Color(android.graphics.Color.parseColor("#32357A"))
+                color = AmareloMC
             )
             Text(
                 text = userProfile?.email ?: "Carregando...",
@@ -138,7 +143,9 @@ fun ContaScreen(appState: AppState, navController: NavController, contaViewModel
             Card(
                 modifier = Modifier
                     .padding(start = 10.dp, end = 10.dp, top = 10.dp),
-                elevation = CardDefaults.cardElevation(1.dp)
+                elevation = CardDefaults.cardElevation(1.dp),
+                colors = CardDefaults.cardColors(Color.White),
+                border = CardDefaults.outlinedCardBorder()
             ) {
 
                 Text(
@@ -164,7 +171,9 @@ fun ContaScreen(appState: AppState, navController: NavController, contaViewModel
             Card(
                 modifier = Modifier
                     .padding(start = 10.dp, end = 10.dp, top = 10.dp),
-                elevation = CardDefaults.cardElevation(1.dp)
+                elevation = CardDefaults.cardElevation(1.dp),
+                colors = CardDefaults.cardColors(Color.White),
+                border = CardDefaults.outlinedCardBorder()
             ) {
                 Text(
                     "Outros", fontSize = 15.sp,
@@ -187,7 +196,9 @@ fun ContaScreen(appState: AppState, navController: NavController, contaViewModel
             Card(
                 modifier = Modifier
                     .padding(start = 10.dp, end = 10.dp, top = 10.dp),
-                elevation = CardDefaults.cardElevation(1.dp)
+                elevation = CardDefaults.cardElevation(1.dp),
+                colors = CardDefaults.cardColors(Color.White),
+                border = CardDefaults.outlinedCardBorder()
 
             ) {
                 MenuItem(icon = R.drawable.sair, title = "Logout", onClick = { FirebaseAuth.getInstance().signOut() },isLogout = true)
@@ -306,7 +317,7 @@ fun MenuItem(icon: Int, title: String, onClick: () -> Unit, isLogout: Boolean = 
         Image(
             painter = painterResource(id = icon),
             contentDescription = null,
-            colorFilter = ColorFilter.tint(if (isLogout) RedLight else Amarelo),
+            colorFilter = ColorFilter.tint(if (isLogout) Red else Amarelo),
             modifier = Modifier
                 .size(25.dp)
                 .align(Alignment.CenterVertically)

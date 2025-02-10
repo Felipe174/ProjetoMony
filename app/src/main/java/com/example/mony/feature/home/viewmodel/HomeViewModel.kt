@@ -13,14 +13,17 @@ import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlin.coroutines.cancellation.CancellationException
 
 
-class HomeViewModel : ViewModel() {
+open class HomeViewModel : ViewModel() {
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
     val authState: StateFlow<AuthState> = _authState
@@ -143,6 +146,20 @@ class HomeViewModel : ViewModel() {
         }
     }
 
+    fun getExpenseById(expenseId: String): Expense? {
+        return _expenses.value.find { it.id == expenseId }
+    }
+
+    open fun getExpense(expenseId: String): StateFlow<Expense?> {
+        return _expenses.map { expenses ->
+            expenses.find { it.id == expenseId }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = null
+        )
+    }
+
     fun deleteExpense(expenseId: String) = viewModelScope.launch(Dispatchers.IO) {
         _uiState.value = UiState.Loading
 
@@ -166,6 +183,8 @@ class HomeViewModel : ViewModel() {
             handleFirestoreError(e, "Erro ao excluir despesa")
         }
     }
+
+
 
     private fun handleFirestoreError(e: Exception, context: String) {
         Log.e("HomeVM", "$context: ${e.stackTraceToString()}")

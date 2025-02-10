@@ -48,8 +48,6 @@ import java.util.Locale
 fun ExpenseItem(
     expense: Expense,
     isSelected: Boolean,
-    onSelect: (Boolean) -> Unit,
-    onLongPress: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val animatedProgress by animateFloatAsState(
@@ -63,10 +61,7 @@ fun ExpenseItem(
             .padding(vertical = 4.dp)
             .scale(animatedProgress)
             .pointerInput(Unit) {
-                detectTapGestures(
-                    onLongPress = { onLongPress() },
-                    onTap = { onSelect(!isSelected) }
-                )
+
             },
         colors = CardDefaults.cardColors(
             containerColor = White,
@@ -87,7 +82,7 @@ fun ExpenseItem(
             ) {
                 Checkbox(
                     checked = isSelected,
-                    onCheckedChange = onSelect,
+                    onCheckedChange = null, // 👈 Desabilita interação direta
                     modifier = Modifier.padding(end = 8.dp),
                     colors = CheckboxDefaults.colors(
                         checkedColor = MaterialTheme.colorScheme.primary,
@@ -162,5 +157,5 @@ fun ExpenseItemPreview() {
     )
 
     // Exibir o ExpenseItem
-    ExpenseItem(expense = exampleExpense, isSelected = false, onSelect = {}, onLongPress = {}) // Passa o objeto Expense
+    ExpenseItem(expense = exampleExpense, isSelected = false) // Passa o objeto Expense
 }

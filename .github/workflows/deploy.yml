@@ -22,6 +22,10 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Configurar versão
+        run: echo "VERSION_CODE=$(date +%s)" >> $GITHUB_ENV
+             echo "VERSION_NAME=1.0.$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
+
       # Permissão para executar o gradlew
       - name: Set executable permission for gradlew
         run: chmod +x ./gradlew

@@ -39,7 +39,7 @@ val topLevelDestinations = listOf(
         iconTextId = R.string.Home,
         selectedIconColor = AmareloClaro,
         unselectedIconColor = Color(0xFF414141),
-        textColor = Color.Black
+        textColor = Color.Black,
     ),
     TopLevelDestination(
         route = Destinations.Notes.route,

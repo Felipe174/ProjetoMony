@@ -12,8 +12,10 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
@@ -40,6 +42,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -69,6 +72,7 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -78,20 +82,30 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -108,6 +122,7 @@ import com.example.mony.ui.theme.AmareloClaro
 import com.example.mony.ui.theme.AmareloDark
 import com.example.mony.ui.theme.AmareloMC
 import com.example.mony.ui.theme.AmareloMedio
+import com.example.mony.ui.theme.Black
 import com.example.mony.ui.theme.Gray
 import com.example.mony.ui.theme.GrayLight
 import com.example.mony.ui.theme.GreenLight
@@ -117,7 +132,6 @@ import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
-import kotlin.math.max
 
 
 class HomeActivity : ComponentActivity() {
@@ -133,7 +147,7 @@ class HomeActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
+fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel(), onExpenseClick: (String) -> Unit ) {
     var showAddExpenseDialog by remember { mutableStateOf(false) }
     var selectedFilter by remember { mutableStateOf("Semana") }
     var currentDate by remember { mutableLongStateOf(System.currentTimeMillis()) }
@@ -141,6 +155,7 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showCheckboxes by remember { mutableStateOf(false) }
     val expenses by homeViewModel.expenses.collectAsState()
+    var selectedExpense by remember { mutableStateOf<Expense?>(null) }
 
     LaunchedEffect(Unit) {
         if (expenses.isEmpty()) {
@@ -177,7 +192,7 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             TopAppBar(
-                modifier = Modifier.padding(bottom = 30.dp),
+                modifier = Modifier,
                 title = {},
                 actions = {
                     if (selectedItems.isNotEmpty()) {
@@ -193,7 +208,9 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
             )
 
 
-            Scaffold {
+            Scaffold(
+                containerColor = White,
+            ) {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
@@ -215,7 +232,7 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
                                     .align(Alignment.CenterVertically)
                                     .border(
                                         width = 2.dp, // Espessura do contorno
-                                        color = AmareloClaro, // Cor do contorno
+                                        color = GrayLight, // Cor do contorno
                                         shape = RoundedCornerShape(12.dp) // Forma do contorno (arredondada aqui)
                                     ),
                                 elevation = CardDefaults.cardElevation(2.dp)
@@ -228,7 +245,7 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
                                         targetValue = expenses.sumOf { it.amount }.toFloat()
                                     )
                                     Row(
-                                        modifier=Modifier.fillMaxWidth()
+                                        modifier=Modifier.fillMaxWidth().height(25.dp)
                                     ){
 
                                     Spacer(modifier = Modifier.width(30.dp).padding(top=5.dp))
@@ -236,7 +253,8 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
                                     Image(
                                         painter = painterResource(id = R.drawable.expense),
                                         contentDescription = "Expense",
-                                        modifier = Modifier.size(15.dp).align(Alignment.CenterVertically)
+                                        modifier = Modifier.size(15.dp).align(Alignment.Bottom),
+
                                     )
 
                                         Spacer(modifier = Modifier.width(5.dp))
@@ -273,7 +291,7 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
                                     .align(Alignment.CenterVertically)
                                     .border(
                                         width = 2.dp, // Espessura do contorno
-                                        color = AmareloClaro, // Cor do contorno
+                                        color = GrayLight, // Cor do contorno
                                         shape = RoundedCornerShape(12.dp) // Forma do contorno (arredondada aqui)
                                     ),
                                 elevation = CardDefaults.cardElevation(2.dp)
@@ -295,8 +313,8 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
                                     val animatedExpense by animateFloatAsState(totalExpenses.toFloat())
 
                                     Row(
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
+                                        modifier=Modifier.fillMaxWidth().height(25.dp)
+                                    ){
 
                                         Spacer(modifier = Modifier.width(30.dp).padding(top=5.dp))
 
@@ -304,7 +322,7 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
                                             painter = painterResource(id = R.drawable.income),
                                             contentDescription = "Expense",
                                             modifier = Modifier.size(15.dp)
-                                                .align(Alignment.CenterVertically)
+                                                .size(15.dp).align(Alignment.Bottom)
                                         )
 
                                         Spacer(modifier = Modifier.width(5.dp))
@@ -357,14 +375,21 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
                                     .combinedClickable(
                                         onClick = {
                                             if (showCheckboxes) {
+                                                // Modo seleção: alternar seleção
                                                 if (isSelected) selectedItems.remove(expense)
                                                 else selectedItems.add(expense)
+                                            } else {
+                                                // Modo normal: abrir detalhes
+                                                onExpenseClick(expense.id)
                                             }
                                         },
                                         onLongClick = {
-                                            if (!isSelected) {
-                                                selectedItems.add(expense)
+                                            if (!showCheckboxes) {
                                                 showCheckboxes = true
+                                            }
+                                            // Adiciona mesmo se já estiver no modo
+                                            if (!selectedItems.contains(expense)) {
+                                                selectedItems.add(expense)
                                             }
                                         }
                                     )
@@ -372,20 +397,18 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
                                 ExpenseItem(
                                     expense = expense,
                                     isSelected = isSelected,
-                                    onSelect = { selected ->
-                                        if (selected) selectedItems.add(expense)
-                                        else selectedItems.remove(expense)
-                                    },
-                                    onLongPress = {
-                                        if (!isSelected) {
-                                            selectedItems.add(expense)
-                                            showCheckboxes = true
-                                        }
-                                    }
+
                                 )
                             }
                         }
                     }
+                }
+
+                selectedExpense?.let { expense ->
+                    ExpenseDetailScreen(
+                        expenseId = expense.id,
+                        onBack = { selectedExpense = null },
+                    )
                 }
 
                 Column(
@@ -423,7 +446,6 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
                             type = type,
                             description = ""
                         )
-                        // Chama o método addExpense do ViewModel para adicionar a despesa
                         homeViewModel.addExpense(newExpense)
                         showAddExpenseDialog = false
                     }
@@ -432,14 +454,18 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel()) {
         }
 
         if (showCheckboxes) {
-            Modifier.pointerInput(Unit) {
-                detectTapGestures(
-                    onTap = {
-                        showCheckboxes = false
-                        selectedItems.clear()
-                    }
-                )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(Unit) {
+                        detectTapGestures(
+                            onTap = {
+                                showCheckboxes = false
+                                selectedItems.clear()
+                            }
+                        )
             }
+            )
         }
     }
 
@@ -478,18 +504,19 @@ fun BtnAdicionar(onClick: () -> Unit, modifier: Modifier = Modifier) {
             Icon(
                 imageVector = Icons.Filled.Add,
                 contentDescription = "Adicionar",
-                modifier = Modifier.rotate(rotationAngle)
+                modifier = Modifier.rotate(rotationAngle),
+                tint=White
             )
         },
-        text = { Text(text = "Adicionar") },
-        containerColor = AmareloClaro,
+        text = { Text(text = "Adicionar", maxLines = 1,color = White, fontSize = 16.sp, fontWeight = FontWeight.Bold) },
+        containerColor = AmareloMC,
         contentColor = Color.Black,
         elevation = FloatingActionButtonDefaults.elevation(8.dp),
         modifier = modifier
             .padding(16.dp)
             .border(
-                width = 2.dp,
-                color = AmareloMC,
+                width = 1.dp,
+                color = Gray,
                 shape = RoundedCornerShape(12.dp)
             ),
     )
@@ -507,7 +534,7 @@ fun HomeWithGraph(
 ) {
     val effectiveFilter = if (selectedFilter.isEmpty()) "Semana" else selectedFilter
 
-    val chartData = remember(currentDate, effectiveFilter, expenses) {
+    val chartData = remember (currentDate, effectiveFilter, expenses) {
         getChartData(
             expenses = expenses,
             currentDate = currentDate,
@@ -532,11 +559,11 @@ fun HomeWithGraph(
             modifier = Modifier
                 .size(width = 600.dp, height = 310.dp)
                 .padding(5.dp)
-                .border(2.dp, AmareloClaro, RoundedCornerShape(12.dp)),
+                .border(2.dp, GrayLight, RoundedCornerShape(12.dp)),
             colors = CardDefaults.cardColors(White),
 
         ) {
-            Column(Modifier.padding(15.dp)) {
+            Column(Modifier.padding(5.dp)) {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 BarChart(
@@ -553,112 +580,288 @@ fun HomeWithGraph(
         )
     }
 }
-
 @Composable
 fun BarChart(
-    data: List<Pair<Double, Double>>, // Pair<Ganhos, Perdas>
+    data: List<Pair<Double, Double>>,
     selectedFilter: String,
     modifier: Modifier = Modifier
 ) {
-    val labels = when (selectedFilter) {
-        "Semana" -> listOf("Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom")
-        "Mês" -> (1..4).map { "Semana $it" }
-        "Ano" -> listOf("Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez")
-        else -> emptyList()
-    }
-
-    var selectedBarIndex by remember { mutableStateOf<Int?>(null) }
-    val tooltipPosition by remember { mutableStateOf(Offset.Zero) }
-
-    Box(modifier = modifier) {
-        Canvas(
-            modifier = Modifier
-                .fillMaxSize()
-                .pointerInput(Unit) {
-                    detectTapGestures { tapOffset ->
-                        val canvasWidth = size.width
-                        val canvasHeight = size.height
-                        val barSpacing = canvasWidth / (data.size + 1)
-                        val barWidth = barSpacing * 0.4f
-
-                        selectedBarIndex = data.indices.firstOrNull { index ->
-                            val barLeft = barSpacing * (index + 1) - barWidth / 2
-                            val barRight = barLeft + barWidth
-                            tapOffset.x in barLeft..barRight
-                        }
-                    }
-                }
-        ) {
-            val canvasWidth = size.width
-            val canvasHeight = size.height
-            val baseline = canvasHeight / 2
-
-            // Linha de base
-            drawLine(
-                color = Color.Gray,
-                start = Offset(0f, baseline),
-                end = Offset(canvasWidth, baseline),
-                strokeWidth = 2f
-            )
-
-            val maxGain = data.maxOfOrNull { it.first } ?: 1.0
-            val maxLoss = data.maxOfOrNull { it.second } ?: 1.0
-            val maxValue = max(maxGain, maxLoss)
-
-            data.forEachIndexed { index, (gain, loss) ->
-                val barSpacing = canvasWidth / (data.size + 1)
-                val barWidth = barSpacing * 0.4f
-                val barLeft = barSpacing * (index + 1) - barWidth / 2
-
-                // Ganhos (acima da linha)
-                val gainHeight = (gain / maxValue) * (baseline - 20f)
-                drawRect(
-                    color = GreenLight,
-                    topLeft = Offset(barLeft, (baseline - gainHeight).toFloat()),
-                    size = Size(barWidth, gainHeight.toFloat())
+    // Define os labels conforme o filtro selecionado.
+    val labels by remember(selectedFilter) {
+        derivedStateOf {
+            when (selectedFilter) {
+                "Semana" -> listOf("Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom")
+                "Mês" -> (1..5).map { "Semana $it" }
+                "Ano" -> listOf(
+                    "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
+                    "Jul", "Ago", "Set", "Out", "Nov", "Dez"
                 )
-
-                // Perdas (abaixo da linha)
-                val lossHeight = (loss / maxValue) * (baseline - 20f)
-                drawRect(
-                    color = RedLight,
-                    topLeft = Offset(barLeft, baseline),
-                    size = Size(barWidth, lossHeight.toFloat())
-                )
-
-                // Rótulos
-                labels.getOrNull(index)?.let { label ->
-                    drawContext.canvas.nativeCanvas.drawText(
-                        label,
-                        barLeft + barWidth / 2,
-                        canvasHeight - 8.dp.toPx(),
-                        android.graphics.Paint().apply {
-                            textSize = 36f
-                            color = android.graphics.Color.BLACK
-                            textAlign = android.graphics.Paint.Align.CENTER
-                        }
-                    )
-                }
+                else -> emptyList()
             }
         }
+    }
 
-        // Tooltip
-        selectedBarIndex?.let { index ->
-            val (gain, loss) = data[index]
-            Box(
+    // Estado para a barra selecionada e posição do tooltip.
+    var selectedBarIndex by remember(selectedFilter) { mutableStateOf<Int?>(null) }
+    val tooltipPosition = remember { mutableStateOf(Offset.Zero) }
+    val textMeasurer = rememberTextMeasurer()
+
+    // Animação global para o "reveal" do gráfico.
+    val animatedProgress by animateFloatAsState(
+        targetValue = 1f,
+        animationSpec = tween(600, easing = FastOutSlowInEasing),
+        label = "chart_transition"
+    )
+
+    // Margens internas do Box.
+    val horizontalPadding = 16.dp
+    val verticalPadding = 24.dp
+
+    // Para conversão de dp para pixels.
+    val density = LocalDensity.current
+    val tooltipWidthPx = with(density) { 120.dp.roundToPx() }
+    val tooltipHeightPx = with(density) { 80.dp.roundToPx() }
+
+    // Captura o tamanho do Box para calcular o posicionamento do tooltip e do gráfico.
+    var boxSize by remember { mutableStateOf(IntSize.Zero) }
+
+    // Animação para o tooltip (efeito de escala).
+    val tooltipScale by animateFloatAsState(
+        targetValue = if (selectedBarIndex != null) 1f else 0.8f,
+        animationSpec = tween(durationMillis = 300)
+    )
+
+    // Animação para a largura da borda da barra selecionada (calculada fora do Canvas).
+    val borderStrokeWidth by animateFloatAsState(
+        targetValue = if (selectedBarIndex != null) 3f else 0f,
+        animationSpec = tween(300)
+    )
+
+    // --- Cálculos dependentes do tamanho do Box ---
+    val labelMarginPx = with(density) { 24.dp.toPx() }
+    val canvasWidth = boxSize.width.toFloat()
+    val canvasHeight = boxSize.height.toFloat()
+    val chartHeight = if (canvasHeight > 0f) canvasHeight - labelMarginPx else 0f
+    val baseline = chartHeight / 2f
+    val maxValue = if (data.isEmpty()) 1f else data.maxOf { maxOf(it.first, it.second).toFloat() }
+
+    // Pré-cálculo dos valores animados para cada barra.
+    val animatedGainHeights = data.map { (gain, _) ->
+        animateFloatAsState(
+            targetValue = if (maxValue > 0f) ((gain.toFloat() / maxValue) * baseline) * animatedProgress else 0f,
+            animationSpec = tween(600, easing = FastOutSlowInEasing)
+        ).value
+    }
+    val animatedLossHeights = data.map { (_, loss) ->
+        animateFloatAsState(
+            targetValue = if (maxValue > 0f) ((loss.toFloat() / maxValue) * baseline) * animatedProgress else 0f,
+            animationSpec = tween(600, easing = FastOutSlowInEasing)
+        ).value
+    }
+
+    // Memoriza os brushes para evitar alocações repetidas.
+    val gainBrush = remember {
+        Brush.verticalGradient(colors = listOf(GreenLight, GreenLight.copy(alpha = 0.7f)))
+    }
+    val lossBrush = remember {
+        Brush.verticalGradient(colors = listOf(RedLight, RedLight.copy(alpha = 0.7f)))
+    }
+
+    // Memoriza os layouts dos labels para que não sejam recalculados a cada frame.
+    val labelTextLayouts = remember(labels, textMeasurer) {
+        labels.map { label ->
+            textMeasurer.measure(
+                text = AnnotatedString(label),
+                style = TextStyle(
+                    color = Color.Black,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                ),
+                maxLines = 1
+            )
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .padding(horizontal = horizontalPadding, vertical = verticalPadding)
+            .onGloballyPositioned { coordinates ->
+                boxSize = coordinates.size
+            }
+    ) {
+        if (data.isEmpty()) {
+            Text(
+                text = "Nenhum dado disponível",
+                modifier = Modifier.align(Alignment.Center),
+                color = Color.Gray
+            )
+        } else {
+            Canvas(
                 modifier = Modifier
-                    .offset(tooltipPosition.x.dp, tooltipPosition.y.dp)
-                    .background(Color(0xCC6200EE), RoundedCornerShape(4.dp))
-                    .padding(8.dp)
+                    .fillMaxSize()
+                    .pointerInput(Unit) {
+                        detectTapGestures { tapOffset ->
+                            val barSpacing = canvasWidth / data.size
+                            val barWidth = barSpacing * 0.7f
+
+                            // Identifica qual barra foi tocada.
+                            selectedBarIndex = data.indices.firstOrNull { index ->
+                                val left = barSpacing * index + (barSpacing - barWidth) / 2f
+                                tapOffset.x in left..(left + barWidth)
+                            }
+                            selectedBarIndex?.let { index ->
+                                val barCenterX = barSpacing * index + barWidth / 2f
+                                // Se o toque ocorrer na parte superior do canvas, posiciona o tooltip abaixo; caso contrário, acima.
+                                val tooltipY = if (tapOffset.y < canvasHeight / 2f) {
+                                    tapOffset.y + 40.dp.toPx()
+                                } else {
+                                    tapOffset.y - 40.dp.toPx()
+                                }
+                                tooltipPosition.value = Offset(barCenterX, tooltipY)
+                            }
+                        }
+                    }
             ) {
-                Column {
-                    Text("Ganhos: ${formatCurrency(gain)}", color = Color.White)
-                    Text("Perdas: ${formatCurrency(loss)}", color = Color.White)
+                val barSpacing = canvasWidth / data.size
+                val barWidth = barSpacing * 0.7f
+
+                // Desenha as linhas de grade.
+                val totalGridLines = 5 * 2 + 1
+                val lineSpacing = if (totalGridLines > 1) chartHeight / (totalGridLines - 1) else 0f
+                for (i in 0 until totalGridLines) {
+                    val y = i * lineSpacing
+                    drawLine(
+                        color = Color.LightGray.copy(alpha = 0.3f),
+                        start = Offset(0f, y),
+                        end = Offset(canvasWidth, y),
+                        strokeWidth = 1f
+                    )
+                }
+
+                // Linha de base com efeito tracejado.
+                drawLine(
+                    color = Color.Gray.copy(alpha = 0.8f),
+                    start = Offset(0f, baseline),
+                    end = Offset(canvasWidth * animatedProgress, baseline),
+                    strokeWidth = 2f,
+                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 5f))
+                )
+
+                data.forEachIndexed { index, (gain, loss) ->
+                    val left = barSpacing * index + (barSpacing - barWidth) / 2f
+
+                    // Usa os valores animados pré-calculados.
+                    val animatedGainHeight = animatedGainHeights.getOrNull(index) ?: 0f
+                    val animatedLossHeight = animatedLossHeights.getOrNull(index) ?: 0f
+
+                    // Desenha a barra de ganhos (acima da linha de base).
+                    drawRoundRect(
+                        brush = gainBrush,
+                        topLeft = Offset(left, baseline - animatedGainHeight),
+                        size = Size(barWidth, animatedGainHeight),
+                        cornerRadius = CornerRadius(4f, 4f)
+                    )
+                    // Desenha a barra de perdas (abaixo da linha de base).
+                    drawRoundRect(
+                        brush = lossBrush,
+                        topLeft = Offset(left, baseline),
+                        size = Size(barWidth, animatedLossHeight),
+                        cornerRadius = CornerRadius(4f, 4f)
+                    )
+
+                    // Se a barra estiver selecionada, desenha um destaque com a borda animada.
+                    if (selectedBarIndex == index) {
+                        drawRoundRect(
+                            color = Color.Yellow,
+                            topLeft = Offset(left, baseline - animatedGainHeight),
+                            size = Size(barWidth, animatedGainHeight + animatedLossHeight),
+                            cornerRadius = CornerRadius(4f, 4f),
+                            style = Stroke(width = borderStrokeWidth)
+                        )
+                    }
+
+                    // Desenha o label (usando o layout memorizado).
+                    labelTextLayouts.getOrNull(index)?.let { textLayoutResult ->
+                        drawText(
+                            textLayoutResult = textLayoutResult,
+                            topLeft = Offset(
+                                left + barWidth / 2 - textLayoutResult.size.width / 2,
+                                chartHeight + 4.dp.toPx()
+                            )
+                        )
+                    }
+                }
+            }
+
+            // Legenda no canto superior direito.
+            Row(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                LegendItem(color = GreenLight, label = "Ganhos")
+                Spacer(modifier = Modifier.width(16.dp))
+                LegendItem(color = RedLight, label = "Perdas")
+            }
+
+            // Exibe o tooltip com animações (fade, expand e escala).
+            AnimatedVisibility(
+                visible = selectedBarIndex != null,
+                enter = fadeIn(animationSpec = tween(300)) + expandVertically(animationSpec = tween(300)),
+                exit = fadeOut(animationSpec = tween(300)) + shrinkVertically(animationSpec = tween(300)),
+                modifier = Modifier.offset {
+                    IntOffset(
+                        x = (tooltipPosition.value.x - tooltipWidthPx / 2f)
+                            .coerceIn(0f, (boxSize.width - tooltipWidthPx).toFloat())
+                            .toInt(),
+                        y = (tooltipPosition.value.y - tooltipHeightPx)
+                            .coerceIn(0f, (boxSize.height - tooltipHeightPx).toFloat())
+                            .toInt()
+                    )
+                }
+            ) {
+                Card(
+                    modifier = Modifier.scale(tooltipScale),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(4.dp),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = labels.getOrElse(selectedBarIndex ?: 0) { "#${(selectedBarIndex ?: 0) + 1}" },
+                            color = Color.Black,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        selectedBarIndex?.let { index ->
+                            val (gain, loss) = data[index]
+                            Text("▲ ${formatCurrency(gain)}", color = GreenLight)
+                            Text("▼ ${formatCurrency(loss)}", color = RedLight)
+                        }
+                    }
                 }
             }
         }
     }
 }
+
+@Composable
+private fun LegendItem(color: Color, label: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            modifier = Modifier
+                .size(12.dp)
+                .background(color, CircleShape)
+        )
+        Spacer(modifier = Modifier.width(4.dp))
+        Text(text = label, fontSize = 12.sp)
+    }
+}
+
 
 @Composable
 fun EnhancedTooltip (value: Double, position: Offset) {
@@ -771,18 +974,16 @@ private fun handleMonth(calendar: Calendar, expenses: List<Expense>): List<Pair<
         setToDayStart()
     }
 
-    val endOfMonth = monthCal.getActualMaximum(Calendar.DAY_OF_MONTH)
     val weeks = mutableListOf<Pair<Double, Double>>()
-
     var currentWeek = 1
-    while (currentWeek <= 6) { // Máximo de 6 semanas para cobrir todos os cenários
+
+    while (true) {
         val startCal = monthCal.cloneAsSafe().apply {
             set(Calendar.WEEK_OF_MONTH, currentWeek)
             set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
             setToDayStart()
         }
 
-        // Garantir que não ultrapasse o mês
         if (startCal.get(Calendar.MONTH) != monthCal.get(Calendar.MONTH)) break
 
         val endCal = startCal.cloneAsSafe().apply {
@@ -793,16 +994,15 @@ private fun handleMonth(calendar: Calendar, expenses: List<Expense>): List<Pair<
             set(Calendar.MILLISECOND, 999)
         }
 
-        // Ajustar para não passar o final do mês
         val adjustedEnd = minOf(endCal.timeInMillis, monthCal.apply {
-            set(Calendar.DAY_OF_MONTH, endOfMonth)
+            set(Calendar.DAY_OF_MONTH, getActualMaximum(Calendar.DAY_OF_MONTH))
         }.timeInMillis)
 
         weeks.add(calculateWeeklyValues(expenses, startCal.timeInMillis, adjustedEnd))
         currentWeek++
     }
 
-    return weeks
+    return weeks.takeIf { it.isNotEmpty() } ?: listOf(0.0 to 0.0)
 }
 
 private fun handleYear(calendar: Calendar, expenses: List<Expense>): List<Pair<Double, Double>> {
@@ -1050,5 +1250,5 @@ fun HomeScreenPreview() {
     // Criando uma instância do AppState
     val appState = AppState(navController)
 
-    HomeScreen(appState = AppState(navController = rememberNavController()), homeViewModel = HomeViewModel())
+    HomeScreen(appState = AppState(navController = rememberNavController()), homeViewModel = HomeViewModel(),onExpenseClick={})
 }

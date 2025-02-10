@@ -12,6 +12,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -54,24 +55,31 @@ fun MyApp() {
     // Configura o NavHost com o NavController e o destino inicial
     NavHost(navController = navController, startDestination = "home") {
         // Tela inicial (Home)
-        composable("home") { HomeScreen(appState) }
+        composable("home") {
+            HomeScreen(
+                appState,
+                homeViewModel= homeViewModel,
+                onExpenseClick = { expenseId ->
+                    navController.navigate("expenseDetail/$expenseId")
+                }
+            )
+        }
 
-        // Tela de Detalhes da Despesa
         composable(
             route = "expenseDetail/{expenseId}",
             arguments = listOf(navArgument("expenseId") { type = NavType.StringType })
         ) { backStackEntry ->
             val expenseId = backStackEntry.arguments?.getString("expenseId") ?: ""
-            val expense = homeViewModel.expenses.value.find { it.id == expenseId }
 
-            if (expense != null) {
-                ExpenseDetailScreen(
-                    expense = expense,
-                    onBack = { navController.popBackStack() }
-                )
-            } else {
-                NotFoundScreen(navController)
+            LaunchedEffect(expenseId) {
+                homeViewModel.loadExpenses()
             }
+
+            ExpenseDetailScreen(
+                expenseId = expenseId,
+                onBack = { navController.popBackStack() },
+                homeViewModel = homeViewModel
+            )
         }
 
         // Tela de notas
