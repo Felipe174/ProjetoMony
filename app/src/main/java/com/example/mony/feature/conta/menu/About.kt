@@ -1,5 +1,6 @@
 package com.example.mony.feature.conta.menu
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,9 +18,11 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,7 +51,8 @@ fun AboutScreen(navController: NavController) {
                             contentDescription = "Voltar"
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(MaterialTheme.colorScheme.onPrimary)
             )
         }
     ) { innerPadding ->
@@ -57,6 +61,7 @@ fun AboutScreen(navController: NavController) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding) // Isso corrige o padding
+                .background(Color.White)
         ) {
 
             item {
@@ -69,7 +74,8 @@ fun AboutScreen(navController: NavController) {
                     elevation = CardDefaults.cardElevation(1.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start=10.dp, end=10.dp, bottom = 5.dp)
+                        .padding(start=10.dp, end=10.dp, bottom = 5.dp),
+                    colors = CardDefaults.cardColors(Color.White)
                 ) {
                     MenuItemSobre(
                         title = "Termos de Uso",
@@ -82,7 +88,8 @@ fun AboutScreen(navController: NavController) {
                     elevation = CardDefaults.cardElevation(1.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start=10.dp, end=10.dp, bottom = 5.dp)
+                        .padding(start=10.dp, end=10.dp, bottom = 5.dp),
+                    colors = CardDefaults.cardColors(Color.White)
                 ) {
 
                     MenuItemSobre(
@@ -96,7 +103,8 @@ fun AboutScreen(navController: NavController) {
                     elevation = CardDefaults.cardElevation(1.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start=10.dp, end=10.dp, bottom = 5.dp)
+                        .padding(start=10.dp, end=10.dp, bottom = 5.dp),
+                    colors = CardDefaults.cardColors(Color.White)
                 ) {
                     MenuItemSobre(
                         title = "Licenças",
@@ -109,7 +117,8 @@ fun AboutScreen(navController: NavController) {
                     elevation = CardDefaults.cardElevation(1.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start=10.dp, end=10.dp, bottom = 5.dp)
+                        .padding(start=10.dp, end=10.dp, bottom = 5.dp),
+                    colors = CardDefaults.cardColors(Color.White)
                 ) {
                     MenuItemSobre(
                         title = "Agradecimentos",
@@ -125,10 +134,10 @@ fun AboutScreen(navController: NavController) {
 fun SobreText(navController: NavController) {
     // Definindo o conteúdo da seção "Sobre Nós"
     Card(
-        elevation = CardDefaults.cardElevation(2.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top=10.dp, start=10.dp, end=10.dp, bottom = 15.dp)
+            .padding(top=10.dp, start=10.dp, end=10.dp, bottom = 15.dp),
+        colors = CardDefaults.cardColors(Color.White)
     ) {
         Column(
             modifier = Modifier
@@ -175,7 +184,8 @@ fun MenuItemSobre(title: String, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(10.dp),
+            .padding(10.dp)
+            .background(Color.White),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(

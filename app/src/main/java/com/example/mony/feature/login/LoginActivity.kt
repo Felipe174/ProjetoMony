@@ -8,8 +8,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,13 +21,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,26 +45,25 @@ import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
-import androidx.navigation.NavController
 import com.example.mony.R
 import com.example.mony.feature.home.HomeActivity
 import com.example.mony.feature.login.viewmodel.LoginState
 import com.example.mony.feature.login.viewmodel.LoginViewModel
-import com.example.mony.feature.utils.AppState
-import com.example.mony.feature.utils.navegation.MyApp
 import com.example.mony.ui.theme.Roxo
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
-
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import com.example.mony.ui.theme.MonyTheme
+import com.google.firebase.auth.GoogleAuthProvider
 class LoginActivity : ComponentActivity() {
-
     private lateinit var googleSignInClient: GoogleSignInClient
+
     private val viewModel: LoginViewModel by viewModels {
         object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -65,10 +72,13 @@ class LoginActivity : ComponentActivity() {
         }
     }
 
+    companion object {
+        private const val RC_SIGN_IN = 100
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Configuração do Google Sign-In
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(getString(R.string.default_web_client_id))
             .requestEmail()
@@ -76,20 +86,18 @@ class LoginActivity : ComponentActivity() {
 
         googleSignInClient = GoogleSignIn.getClient(this, gso)
 
-        // Observando mudanças no estado de login
-        lifecycleScope.launch {
-            viewModel.loginState.collectLatest { state ->
-                when (state) {
-                    is LoginState.Success -> navigateToHome()
-                    is LoginState.Error -> showError(state.message)
-                    LoginState.Loading -> showLoading()
-                    else -> Unit
+        setContent {
+            MonyTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background,
+                ) {
+                    LoginScreen(
+                        onGoogleSignInClick = { startGoogleSignIn() },
+                        isLoading = viewModel.loginState.collectAsState().value == LoginState.Loading
+                    )
                 }
             }
-        }
-
-        setContent {
-            LoginScreen(onGoogleSignInClick = { startGoogleSignIn() })
         }
     }
 
@@ -106,10 +114,23 @@ class LoginActivity : ComponentActivity() {
             try {
                 val task = GoogleSignIn.getSignedInAccountFromIntent(data)
                 val account = task.getResult(ApiException::class.java)
-                account?.let { viewModel.handleGoogleSignInResult(it) }
+                account?.let {
+                    val credential = GoogleAuthProvider.getCredential(account.idToken, null)
+                    FirebaseAuth.getInstance().signInWithCredential(credential)
+                        .addOnCompleteListener(this) { authResult ->
+                            if (authResult.isSuccessful) {
+                                navigateToHome()
+                            } else {
+                                Toast.makeText(
+                                    this,
+                                    "Erro ao trocar de conta",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                }
             } catch (e: ApiException) {
-                viewModel.resetState()
-                Log.e("LoginActivity", "Google sign in failed", e)
+                Toast.makeText(this, "Erro ao fazer login", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -118,128 +139,125 @@ class LoginActivity : ComponentActivity() {
         startActivity(Intent(this, HomeActivity::class.java))
         finish()
     }
-
-    private fun showError(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-    }
-
-    private fun showLoading() {
-        // Implementar um indicador de carregamento, se necessário
-    }
-
-    companion object {
-        private const val RC_SIGN_IN = 100
-    }
 }
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginScreen(onGoogleSignInClick: () -> Unit) {
+fun LoginScreen(
+    onGoogleSignInClick: () -> Unit,
+    isLoading: Boolean
+) {
+    val context = LocalContext.current
+
     Scaffold { paddingValues ->
-        ConstraintLayout(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp)
-        ) {
-            // Referências para os componentes
-            val (image, textGroup, buttonGroup) = createRefs()
-
-            // Imagem principal no topo
-            Image(
-                painter = painterResource(id = R.drawable.login_img),
-                contentDescription = "Imagem 1",
+        Box(modifier = Modifier.fillMaxSize()) {
+            ConstraintLayout(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .constrainAs(image) {
-                        top.linkTo(parent.top, margin = 80.dp) // Espaçamento do topo
-                        start.linkTo(parent.start)
-                        end.linkTo(parent.end)
-                    }
-            )
-
-            // Textos abaixo da imagem
-            Column(
-                modifier = Modifier
-                    .constrainAs(textGroup) {
-                        top.linkTo(image.bottom, margin = 16.dp) // Abaixo da imagem
-                        start.linkTo(parent.start)
-                        end.linkTo(parent.end)
-                    },
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp) // Espaçamento entre textos
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(16.dp)
+                    .background(MaterialTheme.colorScheme.background)
             ) {
-                Text(
-                    text = "Olá",
-                    style = MaterialTheme.typography.headlineLarge.copy(fontSize = 55.sp),
-                )
-                Text(
-                    text = "Bem Vindo ao Mony",
-                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 15.sp),
-                    color = Color.Gray
-                )
-                Text(
-                    text = "onde você irá gerenciar o seu dinheiro",
-                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 15.sp),
-                    color = Color.Gray
-                )
-            }
-
-            // Botões e imagem menor
-            Column(
-                modifier = Modifier
-                    .constrainAs(buttonGroup) {
-                        top.linkTo(textGroup.bottom, margin = 115.dp) // Abaixo do grupo de textos
-                        start.linkTo(parent.start)
-                        end.linkTo(parent.end)
-                    },
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                FilledTonalButton(
-                    onClick = { /* Ação do botão 1 */ },
-                    modifier = Modifier.width(200.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Roxo // Cor de fundo do botão
-                    )
-                ) {
-                    Text("Login")
-                }
-
-                OutlinedButton(onClick = { /* Ação do botão 2 */ },
-                    modifier = Modifier.width(200.dp)) {
-                    Text("Registra-se")
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = "ou faça login com",
-                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 15.sp),
-                    color = Color.Gray,
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
+                val (image, textGroup, buttonGroup) = createRefs()
 
                 Image(
-                    painter = painterResource(id = R.drawable.google),
-                    contentDescription = "imgGoogle",
-                    modifier = Modifier.size(25.dp)
-                        .clickable { onGoogleSignInClick() }
+                    painter = painterResource(id = R.drawable.login_img),
+                    contentDescription = "Imagem 1",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .constrainAs(image) {
+                            top.linkTo(parent.top, margin = 80.dp)
+                            start.linkTo(parent.start)
+                            end.linkTo(parent.end)
+                        }
                 )
+
+                Column(
+                    modifier = Modifier
+                        .constrainAs(textGroup) {
+                            top.linkTo(image.bottom, margin = 16.dp)
+                            start.linkTo(parent.start)
+                            end.linkTo(parent.end)
+                        },
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text("Olá", fontSize = 55.sp, color = MaterialTheme.colorScheme.primary)
+                    Text("Bem Vindo ao Mony", fontSize = 15.sp, color = MaterialTheme.colorScheme.onSecondary)
+                    Text("onde você irá gerenciar o seu dinheiro,", fontSize = 15.sp, color = MaterialTheme.colorScheme.onSecondary)
+                }
+
+                Column(
+                    modifier = Modifier
+                        .constrainAs(buttonGroup) {
+                            top.linkTo(textGroup.bottom, margin = 115.dp)
+                            start.linkTo(parent.start)
+                            end.linkTo(parent.end)
+                        },
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    FilledTonalButton(
+                        onClick = { /* Ação do botão Login */ },
+                        modifier = Modifier.width(200.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        Text("Login", color = MaterialTheme.colorScheme.background)
+                    }
+
+                    OutlinedButton(
+                        onClick = { /* Ação do botão Registro */ },
+                        modifier = Modifier.width(200.dp)
+                    ) {
+                        Text("Registra-se", color = MaterialTheme.colorScheme.primary)
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text("ou faça login com", fontSize = 15.sp, color = MaterialTheme.colorScheme.secondary)
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Image(
+                        painter = painterResource(id = R.drawable.google),
+                        contentDescription = "imgGoogle",
+                        modifier = Modifier
+                            .size(25.dp)
+                            .clickable { onGoogleSignInClick() }
+                    )
+                }
+            }
+
+            if (isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color(0x80000000)) // preto com 50% de opacidade
+                        .clickable(enabled = false) {} // bloqueia interações por trás
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .size(50.dp),
+                        color = Roxo,
+                        strokeWidth = 4.dp
+                    )
+                    Toast.makeText(context, "Conectado com sucesso", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
 }
-fun onGoogleSignInClick(onSuccess: () -> Unit) {
 
-    onSuccess()
-}
 @Preview(showBackground = true)
 @Composable
 fun PreviewLoginScreen() {
-    // Aplica o tema de Material3 à visualização
     MaterialTheme {
-        LoginScreen(onGoogleSignInClick = {})
+        LoginScreen(
+            onGoogleSignInClick = {},
+            isLoading = false // ou false se quiser sem loading
+        )
     }
 }
+
 

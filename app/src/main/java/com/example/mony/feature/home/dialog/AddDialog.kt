@@ -56,6 +56,7 @@ fun AddDialog(
 
     if (showDialog) {
         AlertDialog(
+            containerColor = MaterialTheme.colorScheme.onSecondary,
             onDismissRequest = onDismiss,
             title = { Text("Adicionar Transação") },
             text = {
@@ -190,7 +191,7 @@ private fun TypeSelector(
         onClick = onSelectClick,
         modifier = Modifier.fillMaxWidth(),
         colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            containerColor = MaterialTheme.colorScheme.onSecondary,
             contentColor = MaterialTheme.colorScheme.onSurfaceVariant
         )
     ) {
@@ -211,7 +212,7 @@ private fun DateSelector(
         onClick = onSelectClick,
         modifier = Modifier.fillMaxWidth(),
         colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            containerColor = MaterialTheme.colorScheme.onSecondary,
             contentColor = MaterialTheme.colorScheme.onSurfaceVariant
         )
     ) {

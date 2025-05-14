@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 
 class ContaViewModel : ViewModel() {
 
-    private val _userProfile = MutableStateFlow<UserProfile?>(null)
+    val _userProfile = MutableStateFlow<UserProfile?>(null)
     val userProfile: StateFlow<UserProfile?> = _userProfile
 
     init {
@@ -25,13 +25,18 @@ class ContaViewModel : ViewModel() {
     private fun fetchUserProfile() {
         val firebaseUser: FirebaseUser? = FirebaseAuth.getInstance().currentUser
         firebaseUser?.let { user ->
+            val providerId = user.providerData
+                .firstOrNull { it.providerId != "firebase" }?.providerId ?: ""
+
             _userProfile.update {
                 UserProfile(
                     name = user.displayName ?: "Usuário",
                     email = user.email ?: "E-mail não disponível",
-                    photoUrl = user.photoUrl?.toString()
+                    photoUrl = user.photoUrl?.toString(),
+                    providerId = providerId
                 )
             }
         }
     }
 }
+

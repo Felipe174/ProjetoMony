@@ -18,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -35,25 +36,36 @@ import com.example.mony.feature.conta.viewmodel.ContaViewModel
 import com.example.mony.feature.home.ExpenseDetailScreen
 import com.example.mony.feature.home.HomeScreen
 import com.example.mony.feature.home.viewmodel.HomeViewModel
+import com.example.mony.feature.login.LoginScreen
 import com.example.mony.feature.notas.NotaDetalhes
 import com.example.mony.feature.notas.NotasScreen
 import com.example.mony.feature.notas.NoteEditor
 import com.example.mony.feature.notas.viewmodel.NotesViewModel
 import com.example.mony.feature.utils.AppState
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 
 @SuppressLint("StateFlowValueCalledInComposition")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MyApp() {
-    // Cria um NavController para gerenciar a navegação
+fun MyApp(
+    notesViewModel: NotesViewModel,
+    contaViewModel: ContaViewModel,
+    homeViewModel: HomeViewModel
+) {
     val navController = rememberNavController()
     val appState = remember { AppState(navController) }
-    val notesViewModel: NotesViewModel = viewModel()
-    val contaViewModel: ContaViewModel = viewModel()
-    val homeViewModel: HomeViewModel = viewModel()
+
+    val context = LocalContext.current
+    val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+        .requestEmail()
+        .build()
+    val googleSignInClient = GoogleSignIn.getClient(context, gso)
 
     // Configura o NavHost com o NavController e o destino inicial
     NavHost(navController = navController, startDestination = "home") {
+
         // Tela inicial (Home)
         composable("home") {
             HomeScreen(
@@ -61,7 +73,8 @@ fun MyApp() {
                 homeViewModel= homeViewModel,
                 onExpenseClick = { expenseId ->
                     navController.navigate("expenseDetail/$expenseId")
-                }
+                },
+                navController
             )
         }
 
@@ -81,6 +94,17 @@ fun MyApp() {
                 homeViewModel = homeViewModel
             )
         }
+        // Tela de login
+        composable("login") {
+            LoginScreen(onGoogleSignInClick = {
+                navController.navigate("home") {
+                    popUpTo("login") { inclusive = true }
+                }
+            },
+                isLoading = false
+            )
+        }
+
 
         // Tela de notas
         composable("notes") {
@@ -99,6 +123,7 @@ fun MyApp() {
         ) { backStackEntry ->
             val noteId = backStackEntry.arguments?.getString("noteId") ?: return@composable
             val notesState by notesViewModel.notes.collectAsState()
+
 
             // Exibe um indicador de carregamento até que o estado das notas seja carregado
             if (notesState.isEmpty()) {
@@ -123,9 +148,10 @@ fun MyApp() {
             }
         }
 
+
         // Outras telas
         composable("mais") { ContaScreen(appState, navController, contaViewModel, onLogout = {}) }
-        composable("info") { InfoScreen(navController) }
+        composable("info") { InfoScreen(navController, contaViewModel, googleSignInClient ) }
         composable("secure") { SecureScreen(navController) }
         composable("help") { HelpScreen(navController) }
         composable("about") { AboutScreen(navController) }

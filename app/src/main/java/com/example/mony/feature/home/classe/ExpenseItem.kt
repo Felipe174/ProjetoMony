@@ -61,11 +61,10 @@ fun ExpenseItem(
             .padding(vertical = 4.dp)
             .scale(animatedProgress)
             .pointerInput(Unit) {
-
             },
         colors = CardDefaults.cardColors(
-            containerColor = White,
-            contentColor = MaterialTheme.colorScheme.onSurface
+            containerColor = MaterialTheme.colorScheme.background,
+            contentColor = MaterialTheme.colorScheme.onPrimary
         )
     ) {
         Row(

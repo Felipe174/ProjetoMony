@@ -15,9 +15,12 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarColors
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,9 +50,14 @@ fun HelpScreen(navController: NavController) {
                             contentDescription = "Pesquisar"
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(MaterialTheme.colorScheme.onPrimary)
             )
-            Surface {
+            Surface(
+                modifier = Modifier
+                    .fillMaxSize(),
+                color = Color.White
+            ){
 
             //Introdução
 
@@ -64,7 +72,8 @@ fun HelpScreen(navController: NavController) {
                         elevation = CardDefaults.cardElevation(1.dp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(10.dp)
+                            .padding(10.dp),
+                        colors = CardDefaults.cardColors(Color.White)
                     ) {
                         Text(
                             text = "Precisa de ajuda? Estamos aqui para você!",
@@ -93,7 +102,8 @@ fun HelpScreen(navController: NavController) {
                         elevation = CardDefaults.cardElevation(1.dp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 10.dp, start = 10.dp, end = 10.dp, bottom = 10.dp)
+                            .padding(top = 10.dp, start = 10.dp, end = 10.dp, bottom = 10.dp),
+                        colors = CardDefaults.cardColors(Color.White)
 
                     ) {
                         Text(
@@ -131,7 +141,8 @@ fun HelpScreen(navController: NavController) {
                         elevation = CardDefaults.cardElevation(1.dp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(start = 10.dp, end = 10.dp, bottom = 15.dp)
+                            .padding(start = 10.dp, end = 10.dp, bottom = 15.dp),
+                        colors = CardDefaults.cardColors(Color.White)
                     ) {
                         Text(
                             text = "\uD83D\uDCE7 Entre em Contato",

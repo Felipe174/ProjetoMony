@@ -34,11 +34,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItemDefaults.containerColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
@@ -53,6 +56,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -63,24 +67,44 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.mony.R
+import com.example.mony.feature.conta.viewmodel.ContaViewModel
+import com.example.mony.feature.home.viewmodel.HomeViewModel
 import com.example.mony.feature.notas.classe.NotaItem
 import com.example.mony.feature.notas.viewmodel.NotesViewModel
 import com.example.mony.feature.utils.AppState
 import com.example.mony.feature.utils.navegation.MyApp
-import com.example.mony.feature.utils.navegation.topLevelDestinations
+import com.example.mony.feature.utils.navegation.getTopLevelDestinations
 import com.example.mony.ui.theme.Amarelo
+import com.example.mony.ui.theme.MonyTheme
 import kotlinx.coroutines.launch
+
 
 class NotasActivity : ComponentActivity() {
     private val notesViewModel: NotesViewModel by viewModels()
+    private val contaViewModel: ContaViewModel by viewModels()
+    private val homeViewModel: HomeViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MyApp()
+            MonyTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background,
+                ) {
+                    MyApp(
+                        notesViewModel = notesViewModel,
+                        contaViewModel = contaViewModel,
+                        homeViewModel = homeViewModel
+                    )
+                }
+            }
         }
     }
-}@OptIn(ExperimentalMaterial3Api::class)
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotasScreen(
     navController: NavController,
@@ -89,9 +113,11 @@ fun NotasScreen(
 ) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     var isDeleteMode by remember { mutableStateOf(false) }
-    var selectedNotes by remember { mutableStateOf(mutableSetOf<NotaItem>()) }
+    val selectedNotes by remember { mutableStateOf(mutableSetOf<NotaItem>()) }
     val scope = rememberCoroutineScope()
     val notesState by notesViewModel.notes.collectAsState(initial = emptyList())
+    val topLevelDestinations = getTopLevelDestinations()
+
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -122,93 +148,99 @@ fun NotasScreen(
                         label = {
                             Text(text = stringResource(destination.iconTextId), maxLines = 1)
                         },
-                        onClick = { appState.navigateToTopLevelDestination(destination.route) }
+                        onClick = { appState.navigateToTopLevelDestination(destination.route) },
                     )
                 }
             }
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = 65.dp, end = 5.dp, start = 5.dp, bottom = 5.dp),
-            ) {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
+
+            Box(modifier = Modifier.fillMaxSize()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.background)
                 ) {
-                    if (notesState.isEmpty()) {
-                        item {
-                            Text(
-                                text = "Nenhuma nota encontrada",
-                                color = Color.Gray,
-                                modifier = Modifier.fillMaxWidth(),
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                    } else {
-                        items(notesState) { note ->
-                            val alpha by animateFloatAsState(
-                                targetValue = if (selectedNotes.contains(note)) 0.5f else 1f,
-                                animationSpec = tween(durationMillis = 300)
-                            )
-                            NotasItem(
-                                note = note,
-                                onClick = {
-                                    if (isDeleteMode) {
-                                        if (selectedNotes.contains(note)) {
-                                            selectedNotes.remove(note)
+                    TopAppBar(
+                        title = { Text("Notas") },
+                        actions = {
+                            if (isDeleteMode) {
+                                IconButton(onClick = {
+                                    selectedNotes.forEach { notesViewModel.deleteNote(it) }
+                                    selectedNotes.clear()
+                                    isDeleteMode = false
+                                }) {
+                                    Icon(Icons.Default.Delete, contentDescription = "Excluir Notas")
+                                }
+                            }
+                        },
+                        navigationIcon = {
+                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                Icon(Icons.Default.Menu, contentDescription = "Menu")
+                            }
+                        },
+                        colors = topAppBarColors(containerColor = MaterialTheme.colorScheme.onPrimary)
+                    )
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
+                    ) {
+                        if (notesState.isEmpty()) {
+                            item {
+                                Text(
+                                    text = "Nenhuma nota encontrada",
+                                    color = Color.Gray,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        } else {
+                            items(notesState) { note ->
+                                val alpha by animateFloatAsState(
+                                    targetValue = if (selectedNotes.contains(note)) 0.5f else 1f,
+                                    animationSpec = tween(durationMillis = 300)
+                                )
+                                NotasItem(
+                                    note = note,
+                                    onClick = {
+                                        if (isDeleteMode) {
+                                            if (selectedNotes.contains(note)) {
+                                                selectedNotes.remove(note)
+                                            } else {
+                                                selectedNotes.add(note)
+                                            }
                                         } else {
-                                            selectedNotes.add(note)
+                                            navController.navigate("notaDetalhes/${note.id}")
                                         }
-                                    } else {
-                                        navController.navigate("notaDetalhes/${note.id}")
-                                    }
-                                },
-                                onLongClick = {
-                                    isDeleteMode = true
-                                    selectedNotes.add(note)
-                                },
-                                isSelected = selectedNotes.contains(note)
-                            )
+                                    },
+                                    onLongClick = {
+                                        isDeleteMode = true
+                                        selectedNotes.add(note)
+                                    },
+                                    isSelected = selectedNotes.contains(note)
+                                )
+                            }
                         }
                     }
                 }
-            }
-            Column(
-                Modifier.fillMaxSize().padding(bottom = 85.dp),
-                verticalArrangement = Arrangement.Bottom,
-                horizontalAlignment = Alignment.End
-            ) {
-                FloatingActionButton(
-                    containerColor = Amarelo,
-                    onClick = { navController.navigate("noteEditor") },
-                    modifier = Modifier.padding(16.dp)
+
+                Column(
+                    Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.Bottom,
+                    horizontalAlignment = Alignment.End
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = "Criar Nota")
+                    FloatingActionButton(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        onClick = { navController.navigate("noteEditor") }
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Criar Nota")
+                    }
                 }
             }
         }
-
-        TopAppBar(
-            title = { Text("Notas") },
-            actions = {
-                if (isDeleteMode) {
-                    IconButton(onClick = {
-                        selectedNotes.forEach { notesViewModel.deleteNote(it) }
-                        selectedNotes.clear()
-                        isDeleteMode = false
-                    }) {
-                        Icon(Icons.Default.Delete, contentDescription = "Excluir Notas")
-                    }
-                }
-            },
-            navigationIcon = {
-                IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                    Icon(Icons.Default.Menu, contentDescription = "Menu")
-                }
-            }
-        )
     }
 }
+
 
 @Composable
 fun DrawerMenu(onMenuItemClick: (String) -> Unit) {
@@ -224,7 +256,7 @@ fun DrawerMenu(onMenuItemClick: (String) -> Unit) {
                 "Configuração da Conta",
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
-                color = Color(android.graphics.Color.parseColor("#808080")),
+                color = MaterialTheme.colorScheme.onSecondary,
                 modifier = Modifier
                     .align(Alignment.Start)
                     .padding(start = 10.dp, top = 20.dp, bottom = 10.dp)
@@ -245,7 +277,7 @@ fun DrawerMenu(onMenuItemClick: (String) -> Unit) {
                 title = "Arquivos",
                 onClick = {
                     selectedItemIndex = 1
-                    onMenuItemClick("arquivoScreen")
+                    onMenuItemClick("arquivosScreen")
                 },
                 isSelected = selectedItemIndex == 1
             )
@@ -265,7 +297,7 @@ fun DrawerMenu(onMenuItemClick: (String) -> Unit) {
                 "Configurações",
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
-                color = Color(android.graphics.Color.parseColor("#808080")),
+                color = MaterialTheme.colorScheme.onSecondary,
                 modifier = Modifier
                     .padding(start = 10.dp, top = 10.dp)
             )
@@ -275,7 +307,7 @@ fun DrawerMenu(onMenuItemClick: (String) -> Unit) {
                 title = "Configuração",
                 onClick = {
                     selectedItemIndex = 2
-                    onMenuItemClick("mais")
+                    onMenuItemClick("configScreen")
                 },
                 isSelected = selectedItemIndex == 2
             )
@@ -298,7 +330,7 @@ fun DrawerItem(icon: Int, title: String, onClick: () -> Unit, isSelected: Boolea
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(backgroundColor)
+            .background(MaterialTheme.colorScheme.background)
             .clickable(onClick = onClick)
             .padding(10.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -316,11 +348,10 @@ fun DrawerItem(icon: Int, title: String, onClick: () -> Unit, isSelected: Boolea
             text = title,
             fontSize = 15.sp,
             fontWeight = FontWeight.Medium,
-            color = textColor
+            color = MaterialTheme.colorScheme.onSecondary
         )
     }
 }
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -332,40 +363,43 @@ fun NoteEditor(
     var noteTitle by remember { mutableStateOf("") }
     var noteContent by remember { mutableStateOf("") }
 
-    NavigationSuiteScaffold(
-        navigationSuiteItems = {},
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
     ) {
+        TopAppBar(
+            title = { Text("Nova Nota", color = MaterialTheme.colorScheme.onSecondary) },
+            navigationIcon = {
+                IconButton(onClick = { navController.popBackStack() }) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = "Voltar")
+                }
+            },
+            colors = topAppBarColors(containerColor = MaterialTheme.colorScheme.onPrimary)
+        )
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(5.dp)
+                .padding(bottom = 20.dp)
                 .padding(16.dp)
+                .background(MaterialTheme.colorScheme.background),
         ) {
-            // Botão para voltar (topo)
-            TopAppBar(
-                title = { Text("Nova Nota") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Voltar")
-                    }
-                }
-            )
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Campo de Título
             OutlinedTextField(
                 value = noteTitle,
                 onValueChange = { noteTitle = it },
-                label = { Text("Título") },
-                modifier = Modifier.fillMaxWidth()
+                label = { Text("Título", color = MaterialTheme.colorScheme.secondary) },
+                modifier = Modifier.fillMaxWidth(),
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Campo de Conteúdo
             OutlinedTextField(
                 value = noteContent,
                 onValueChange = { noteContent = it },
-                label = { Text("Conteúdo") },
+                label = { Text("Conteúdo", color = MaterialTheme.colorScheme.secondary) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
@@ -373,24 +407,22 @@ fun NoteEditor(
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Botão de salvar
             Button(
                 onClick = {
                     if (noteTitle.isNotEmpty() && noteContent.isNotEmpty()) {
                         notesViewModel.addNote(NotaItem(title = noteTitle, content = noteContent))
-                        navController.popBackStack()  // Volta para a tela anterior após salvar
+                        navController.popBackStack()
                     }
                 },
                 modifier = Modifier.align(Alignment.End),
-                enabled = noteTitle.isNotEmpty() && noteContent.isNotEmpty()  // Habilita apenas se os campos não estiverem vazios
+                enabled = noteTitle.isNotEmpty() && noteContent.isNotEmpty()
             ) {
-                Text("Salvar")
+                Text("Salvar", color = MaterialTheme.colorScheme.onSecondary)
             }
-
-
         }
     }
 }
+
 
 @Preview(showBackground = true)
 @Composable
@@ -408,13 +440,9 @@ fun NotasScreenPreview() {
 @Preview(showBackground = true)
 @Composable
 fun NoteEditorPreview() {
-    // Usando um NavController simples
     val navController = rememberNavController()
-
-    // Criando uma instância do AppState
     val appState = AppState(navController)
 
-    // Chamando a tela de Editor de Notas diretamente
     NoteEditor(
         navController = navController,
         appState = appState,

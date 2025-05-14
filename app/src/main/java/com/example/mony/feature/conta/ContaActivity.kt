@@ -1,7 +1,9 @@
-
 package com.example.mony.feature.conta
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -13,6 +15,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -20,11 +23,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.TabRowDefaults.Divider
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
@@ -38,6 +44,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.Red
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -51,54 +58,67 @@ import coil.compose.AsyncImage
 import com.example.mony.R
 import com.example.mony.feature.conta.classe.UserProfile
 import com.example.mony.feature.conta.viewmodel.ContaViewModel
+import com.example.mony.feature.home.viewmodel.HomeViewModel
+import com.example.mony.feature.login.LoginActivity
+import com.example.mony.feature.notas.viewmodel.NotesViewModel
 import com.example.mony.feature.utils.AppState
 import com.example.mony.feature.utils.navegation.MyApp
-import com.example.mony.feature.utils.navegation.topLevelDestinations
+import com.example.mony.feature.utils.navegation.getTopLevelDestinations
 import com.example.mony.ui.theme.Amarelo
 import com.example.mony.ui.theme.AmareloMC
 import com.example.mony.ui.theme.Black
+import com.example.mony.ui.theme.MonyTheme
 import com.example.mony.ui.theme.RedLight
+import com.example.mony.ui.theme.Roxo
+import com.example.mony.ui.theme.RoxoDark
+import com.example.mony.ui.theme.RoxoMedio
 import com.example.mony.ui.theme.White
 import com.google.firebase.auth.FirebaseAuth
 
 class ContaActivity : ComponentActivity() {
+    private val notesViewModel: NotesViewModel by viewModels()
     private val contaViewModel: ContaViewModel by viewModels()
+    private val homeViewModel: HomeViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MyApp()
+            MonyTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background,
+                ) {
+                    MyApp(
+                        notesViewModel = notesViewModel,
+                        contaViewModel = contaViewModel,
+                        homeViewModel = homeViewModel
+                    )
+                }
+            }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContaScreen(appState: AppState, navController: NavController, contaViewModel: ContaViewModel, onLogout: () -> Unit) {
     val userProfile = contaViewModel.userProfile.collectAsState().value
+    val context = LocalContext.current
+    val topLevelDestinations = getTopLevelDestinations()
+
+
 
     NavigationSuiteScaffold(
-        containerColor = White,
         navigationSuiteItems = {
             topLevelDestinations.forEach { destination ->
-                val selected = appState.isRouteInHierarchy(
-                    destination.route
-                )
+                val selected = appState.isRouteInHierarchy(destination.route)
+
                 item(
                     selected = selected,
                     icon = {
                         Icon(
-                            imageVector = if (selected) {
-                                destination.selectedIcon
-                            } else {
-                                destination.unselectedIcon
-                            },
+                            imageVector = if (selected) destination.selectedIcon else destination.unselectedIcon,
                             contentDescription = stringResource(destination.iconTextId),
-                            tint = if (selected) {
-                                destination.selectedIconColor
-                            } else {
-                                destination.unselectedIconColor
-                            }
+                            tint = if (selected) destination.selectedIconColor else destination.unselectedIconColor
                         )
                     },
                     label = {
@@ -107,7 +127,9 @@ fun ContaScreen(appState: AppState, navController: NavController, contaViewModel
                             maxLines = 1
                         )
                     },
-                    onClick = { appState.navigateToTopLevelDestination(destination.route) }
+                    onClick = {
+                        appState.navigateToTopLevelDestination(destination.route)
+                    }
                 )
             }
         }
@@ -129,13 +151,13 @@ fun ContaScreen(appState: AppState, navController: NavController, contaViewModel
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(top = 35.dp),
-                color = AmareloMC
+                color = MaterialTheme.colorScheme.primary
             )
             Text(
                 text = userProfile?.email ?: "Carregando...",
                 fontSize = 18.sp,
                 modifier = Modifier.padding(top = 5.dp),
-                color = Color(android.graphics.Color.parseColor("#747679"))
+                color = MaterialTheme.colorScheme.onSecondary
             )
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -143,15 +165,13 @@ fun ContaScreen(appState: AppState, navController: NavController, contaViewModel
             Card(
                 modifier = Modifier
                     .padding(start = 10.dp, end = 10.dp, top = 10.dp),
-                elevation = CardDefaults.cardElevation(1.dp),
-                colors = CardDefaults.cardColors(Color.White),
-                border = CardDefaults.outlinedCardBorder()
+                colors = CardDefaults.cardColors(MaterialTheme.colorScheme.background),
             ) {
 
                 Text(
                     "Configuração da Conta", fontSize = 15.sp,
                     fontWeight = FontWeight.Medium,
-                    color = Color(android.graphics.Color.parseColor("#808080")),
+                    color = MaterialTheme.colorScheme.secondary,
                     modifier = Modifier
                         .align(Alignment.Start)
                         .padding(start = 10.dp, top = 10.dp, bottom = 10.dp)
@@ -166,19 +186,16 @@ fun ContaScreen(appState: AppState, navController: NavController, contaViewModel
 
             }
 
-            Spacer(modifier = Modifier.height(5.dp))
 
             Card(
                 modifier = Modifier
                     .padding(start = 10.dp, end = 10.dp, top = 10.dp),
-                elevation = CardDefaults.cardElevation(1.dp),
-                colors = CardDefaults.cardColors(Color.White),
-                border = CardDefaults.outlinedCardBorder()
+                colors = CardDefaults.cardColors(MaterialTheme.colorScheme.background),
             ) {
                 Text(
                     "Outros", fontSize = 15.sp,
                     fontWeight = FontWeight.Medium,
-                    color = Color(android.graphics.Color.parseColor("#808080")),
+                    color = MaterialTheme.colorScheme.secondary,
                     modifier = Modifier
                         .align(Alignment.Start)
                         .padding(start = 10.dp, top = 10.dp, bottom = 10.dp)
@@ -196,12 +213,23 @@ fun ContaScreen(appState: AppState, navController: NavController, contaViewModel
             Card(
                 modifier = Modifier
                     .padding(start = 10.dp, end = 10.dp, top = 10.dp),
-                elevation = CardDefaults.cardElevation(1.dp),
-                colors = CardDefaults.cardColors(Color.White),
-                border = CardDefaults.outlinedCardBorder()
-
+                colors = CardDefaults.cardColors(MaterialTheme.colorScheme.background),
             ) {
-                MenuItem(icon = R.drawable.sair, title = "Logout", onClick = { FirebaseAuth.getInstance().signOut() },isLogout = true)
+                MenuItem(
+                    icon = R.drawable.sair,
+                    title = "Logout",
+                    onClick = {
+                        FirebaseAuth.getInstance().signOut()
+
+                        Toast.makeText(context, "Desconectado com sucesso", Toast.LENGTH_SHORT).show()
+
+                        val intent = Intent(context, LoginActivity::class.java)
+                        context.startActivity(intent)
+                        (context as? Activity)?.finish()
+                    },
+                    isLogout = true
+                )
+
             }
         }
     }
@@ -216,7 +244,6 @@ fun ProfileHeader(userProfile: UserProfile?, navController: NavController) {
     ) {
         val (background, profile, title, back, pen) = createRefs()
 
-        // Fundo com bordas arredondadas na parte inferior
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -230,8 +257,8 @@ fun ProfileHeader(userProfile: UserProfile?, navController: NavController) {
                 .background(
                     Brush.linearGradient(
                         colors = listOf(
-                            Color(android.graphics.Color.parseColor("#9932CC")),
-                            Color(android.graphics.Color.parseColor("#4A4D9D"))
+                            MaterialTheme.colorScheme.surfaceContainerLow ,
+                            MaterialTheme.colorScheme.surfaceContainerLowest,
                         )
                     )
                 )
@@ -275,7 +302,7 @@ fun ProfileHeader(userProfile: UserProfile?, navController: NavController) {
         IconButton(
             onClick = { navController.navigate("home") },
             modifier = Modifier.constrainAs(back) {
-                top.linkTo(background.top, margin = 16.dp)
+                top.linkTo(background.top, margin = 20.dp)
                 start.linkTo(parent.start, margin = 5.dp)
             }
         ) {
@@ -283,7 +310,7 @@ fun ProfileHeader(userProfile: UserProfile?, navController: NavController) {
                 painter = painterResource(id = R.drawable.back),
                 contentDescription = "Voltar",
                 modifier = Modifier.size(24.dp),
-                tint = Color.White
+                tint = MaterialTheme.colorScheme.onSecondary
             )
         }
 
@@ -299,58 +326,60 @@ fun ProfileHeader(userProfile: UserProfile?, navController: NavController) {
                 painter = painterResource(id = R.drawable.edit),
                 modifier = Modifier.size(24.dp),
                 contentDescription = "Editar",
-                tint = Color.White,
+                tint = MaterialTheme.colorScheme.onSecondary,
             )
         }
     }
 }
 
 @Composable
-fun MenuItem(icon: Int, title: String, onClick: () -> Unit, isLogout: Boolean = false) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(10.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Image(
-            painter = painterResource(id = icon),
-            contentDescription = null,
-            colorFilter = ColorFilter.tint(if (isLogout) Red else Amarelo),
+fun MenuItem(
+    icon: Int,
+    title: String,
+    onClick: () -> Unit,
+    isLogout: Boolean = false
+) {
+    Column {
+        Row(
             modifier = Modifier
-                .size(25.dp)
-                .align(Alignment.CenterVertically)
-
-        )
-        Spacer(modifier = Modifier.width(16.dp))
-        Text(
-            text = title,
-            modifier = Modifier.align(Alignment.CenterVertically)
-            ,fontSize = 16.sp,
-            fontWeight = FontWeight.Medium,
-
-        )
-        Column(
-            modifier = Modifier
-                .fillMaxWidth(),
-            horizontalAlignment = Alignment.End
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(10.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            Image(
+                painter = painterResource(id = icon),
+                contentDescription = null,
+                colorFilter = ColorFilter.tint(if (isLogout) Color.Red else MaterialTheme.colorScheme.primary),
+                modifier = Modifier
+                    .size(25.dp)
+            )
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Text(
+                text = title,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.weight(1f),
+                color = MaterialTheme.colorScheme.onSecondary
+            )
+
             Image(
                 painter = painterResource(id = R.drawable.next),
                 contentDescription = null,
-                colorFilter = ColorFilter.tint(Color.Gray),
-                modifier = Modifier
-                    .size(10.dp)
+                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.secondary),
+                modifier = Modifier.size(10.dp)
             )
         }
-        if (icon == R.drawable.sair) {
-            return Image(
-                painter = painterResource(id = R.drawable.sair),
-                contentDescription = null,
-                colorFilter = ColorFilter.tint(Color.Red),
-            )
-        }
+
+        Spacer(modifier = Modifier.height(2.dp))
+
+        Divider(
+            color = MaterialTheme.colorScheme.secondary,
+            thickness = 1.dp,
+            modifier = Modifier.padding(horizontal = 10.dp)
+        )
     }
 }
 @Preview(showBackground = true)
@@ -365,10 +394,10 @@ fun ContaScreenPreview() {
     // Criando um AppState fictício
     val appState = remember { AppState(navController) }
 
-        ContaScreen(
-            appState = appState,
-            navController = navController,
-            contaViewModel = contaViewModel,
-            onLogout = {})
-    
+    ContaScreen(
+        appState = appState,
+        navController = navController,
+        contaViewModel = contaViewModel,
+        onLogout = {})
+
 }

@@ -111,6 +111,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
 
+
     // Serialization
     implementation(libs.kotlinx.serialization.json)
 
@@ -136,6 +137,11 @@ dependencies {
     implementation(libs.androidx.material3.adaptive.navigation.suite.android)
     implementation(libs.androidx.glance.appwidget)
     implementation(libs.generativeai)
+    implementation (libs.accompanist.pager)
+    implementation (libs.accompanist.pager.indicators)
+    implementation ("com.google.accompanist:accompanist-swiperefresh:0.36.0")
+
+
 
 }
 

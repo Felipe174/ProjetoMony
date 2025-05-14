@@ -3,7 +3,8 @@ package com.example.mony.ui.theme
 import androidx.compose.ui.graphics.Color
 
 val Black = Color(0xFF000000)
-val White = Color(0xFFFFFFFF)
+val BlackMenos = Color(0xFF111111)
+val White = Color(0xFFF3F1F1)
 val OrangeDark = Color(0xFF5722)
 val Orange = Color(0xFFC14800)
 val OrangeLight = Color(0xFFFF8C00)
@@ -31,5 +32,8 @@ val AmareloDark = Color(0xFFE09F00)
 val GrayLight = Color(0xFFE7E7E7)
 val Gray = Color(0xFF808080)
 val GrayDark = Color(0xFF404040)
+val GrayTop = Color(0xFF181818)
+
+
 
 
