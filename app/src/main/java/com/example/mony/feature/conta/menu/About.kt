@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.mony.R
+import com.example.mony.ui.theme.MonyTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -209,5 +210,6 @@ fun MenuItemSobre(title: String, onClick: () -> Unit) {
 @Composable
 fun AboutScreenPreview() {
     val navController = rememberNavController()
+    MonyTheme {
     AboutScreen(navController)
-}
+}}

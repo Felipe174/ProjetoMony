@@ -29,6 +29,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mony.feature.notas.classe.NotaItem
+import com.example.mony.ui.theme.MonyTheme
 import com.example.mony.ui.theme.White
 
 @Composable
@@ -91,6 +92,8 @@ fun NotasItem(
 @Preview(showBackground = true)
 @Composable
 fun NotaItemPreview() {
+
+    MonyTheme {
     NotasItem(
         note = NotaItem(
             title = "Título da Nota",
@@ -100,4 +103,4 @@ fun NotaItemPreview() {
         isSelected = false,
         onLongClick = {}
     )
-}
+}}

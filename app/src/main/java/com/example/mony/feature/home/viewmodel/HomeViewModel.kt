@@ -22,7 +22,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlin.coroutines.cancellation.CancellationException
 
-
 open class HomeViewModel : ViewModel() {
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
@@ -40,16 +39,11 @@ open class HomeViewModel : ViewModel() {
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            try {
-                auth.currentUser?.reload()?.await()
-                _authState.value = if (auth.currentUser != null) {
-                    loadExpenses()
-                    AuthState.Authenticated
-                } else {
-                    AuthState.Unauthenticated
-                }
-            } catch (e: Exception) {
-                _authState.value = AuthState.Error("Falha na verificação de autenticação")
+            _authState.value = if (auth.currentUser != null) {
+                loadExpenses()
+                AuthState.Authenticated
+            } else {
+                AuthState.Unauthenticated
             }
         }
     }
@@ -77,21 +71,17 @@ open class HomeViewModel : ViewModel() {
         }
 
         try {
-            with(expense) {
-                require(amount >= 0) { "Valor não pode ser negativo" }
-                require(date in 1..System.currentTimeMillis()) { "Data inválida" }
-            }
+            require(expense.amount >= 0) { "Valor não pode ser negativo" }
+            require(expense.date in 1..System.currentTimeMillis()) { "Data inválida" }
 
-            val expenseMap = expense.toFirestoreMap()
-
-            Firebase.firestore.collection("users")
+            val docRef = Firebase.firestore.collection("users")
                 .document(currentUserId)
                 .collection("transactions")
-                .add(expenseMap)
+                .add(expense.toFirestoreMap())
                 .await()
 
             _expenses.update { currentList ->
-                currentList + expense.copy(id = expense.id)
+                currentList + expense.copy(id = docRef.id) // <-- IMPORTANTE!
             }
 
             _uiState.value = UiState.Success("Despesa adicionada com sucesso!")
@@ -118,28 +108,25 @@ open class HomeViewModel : ViewModel() {
                 .await()
 
             val expensesList = snapshot.documents.mapNotNull { doc ->
-                try {
-                    doc.getString("type")?.let { TransactionType.valueOf(it) }?.let {
-                        Expense(
-                            id = doc.id,
-                            amount = doc.getDouble("amount") ?: 0.0,
-                            date = doc.getLong("date") ?: System.currentTimeMillis(),
-                            type = it,
-                            description = doc.getString("description") ?: ""
-                        )
-                    }
-                } catch (e: Exception) {
-                    Log.w("HomeVM", "Documento corrompido: ${doc.id}", e)
+                runCatching {
+                    val type = TransactionType.valueOf(doc.getString("type") ?: return@runCatching null)
+                    Expense(
+                        id = doc.id,
+                        amount = doc.getDouble("amount") ?: 0.0,
+                        date = doc.getLong("date") ?: System.currentTimeMillis(),
+                        type = type,
+                        description = doc.getString("description") ?: ""
+                    )
+                }.getOrElse {
+                    Log.w("HomeVM", "Documento corrompido: ${doc.id}", it)
                     null
                 }
             }
 
             _expenses.value = expensesList
-            _uiState.value = if (expensesList.isEmpty()) {
-                UiState.Success("Nenhuma despesa encontrada")
-            } else {
-                UiState.Success()
-            }
+            _uiState.value = UiState.Success(
+                if (expensesList.isEmpty()) "Nenhuma despesa encontrada" else null
+            )
 
         } catch (e: Exception) {
             handleFirestoreError(e, "Falha ao carregar despesas")
@@ -151,13 +138,9 @@ open class HomeViewModel : ViewModel() {
     }
 
     open fun getExpense(expenseId: String): StateFlow<Expense?> {
-        return _expenses.map { expenses ->
-            expenses.find { it.id == expenseId }
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = null
-        )
+        return _expenses
+            .map { it.find { e -> e.id == expenseId } }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
     }
 
     fun deleteExpense(expenseId: String) = viewModelScope.launch(Dispatchers.IO) {
@@ -183,8 +166,6 @@ open class HomeViewModel : ViewModel() {
             handleFirestoreError(e, "Erro ao excluir despesa")
         }
     }
-
-
 
     private fun handleFirestoreError(e: Exception, context: String) {
         Log.e("HomeVM", "$context: ${e.stackTraceToString()}")

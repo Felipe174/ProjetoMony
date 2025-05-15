@@ -207,7 +207,8 @@ fun NotasScreen(
                                             } else {
                                                 selectedNotes.add(note)
                                             }
-                                        } else {
+                                        }
+                                        if (note.id.isNotEmpty()) {
                                             navController.navigate("notaDetalhes/${note.id}")
                                         }
                                     },
@@ -430,30 +431,33 @@ fun NotasScreenPreview() {
     val navController = rememberNavController()
     val appState = AppState(navController)
 
+    MonyTheme {
     NotasScreen(
         navController = navController,
         appState = appState,
         notesViewModel = NotesViewModel()
     )
 }
-
+}
 @Preview(showBackground = true)
 @Composable
 fun NoteEditorPreview() {
     val navController = rememberNavController()
     val appState = AppState(navController)
-
+    MonyTheme {
     NoteEditor(
         navController = navController,
         appState = appState,
         notesViewModel = NotesViewModel()
     )
-}
+}}
 
 @Preview(showBackground = true)
 @Composable
 fun DrawerMenuPreview() {
-    DrawerMenu { selectedItem ->
-        println("Menu item clicked: $selectedItem")
+    MonyTheme {
+        DrawerMenu { selectedItem ->
+            println("Menu item clicked: $selectedItem")
+        }
     }
 }

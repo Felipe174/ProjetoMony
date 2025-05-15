@@ -33,6 +33,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.mony.feature.notas.classe.NotaItem
 import com.example.mony.feature.notas.viewmodel.NotesViewModel
+import com.example.mony.ui.theme.MonyTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -148,6 +149,7 @@ fun NotaDetalhesPreview() {
     val navController = rememberNavController()
     val notesViewModel = NotesViewModel()
 
+    MonyTheme {
     NotaDetalhes(
         title = "Exemplo de Título",
         content = "Este é o conteúdo completo da nota.",
@@ -155,4 +157,4 @@ fun NotaDetalhesPreview() {
         notesViewModel = notesViewModel,
         noteId = "1",
     )
-}
+}}

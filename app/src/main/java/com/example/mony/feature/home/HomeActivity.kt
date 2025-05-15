@@ -476,7 +476,10 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel(), o
                                 }
                                 Spacer(modifier = Modifier.weight(1f))
                             }
+
+
                         }
+
 
                         item {
                             Spacer(modifier = Modifier.height(7.dp))
@@ -493,11 +496,6 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel(), o
                             val isSelected = selectedItems.contains(expense)
                             val alpha by animateFloatAsState(if (isSelected) 0.5f else 1f)
 
-                            AnimatedVisibility(
-                                visible = true,
-                                enter = fadeIn() + slideInVertically(),
-                                exit = fadeOut() + slideOutVertically()
-                            ) {
                                 Box(
                                     modifier = Modifier
                                         .graphicsLayer(alpha = alpha)
@@ -532,35 +530,19 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel(), o
                             }
                         }
                     }
+
+
+                    AnimatedVisibility(
+                        visible = true,
+                        enter = fadeIn() + slideInVertically(),
+                        exit = fadeOut() + slideOutVertically()
+                    ) {
                 }
 
                 selectedExpense?.let { expense ->
                     ExpenseDetailScreen(
                         expenseId = expense.id,
                         onBack = { selectedExpense = null },
-                    )
-                }
-
-                Column(
-                    Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Bottom,
-                    horizontalAlignment = Alignment.End
-                ) {
-                    var buttonState by remember { mutableStateOf(false) }
-                    val infiniteTransition = rememberInfiniteTransition()
-                    val floatAnimation by infiniteTransition.animateFloat(
-                        initialValue = 0f,
-                        targetValue = 10f,
-                        animationSpec = infiniteRepeatable(
-                            animation = tween(1000, easing = FastOutSlowInEasing),
-                            repeatMode = RepeatMode.Reverse
-                        ),
-                        label = "floatAnimation"
-                    )
-
-                    BtnAdicionar(
-                        onClick = { showAddExpenseDialog = true },
-                        modifier = Modifier.offset(y = floatAnimation.dp)
                     )
                 }
 
@@ -596,7 +578,30 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel(), o
                     }
             )
         }
+        Column(
+            Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Bottom,
+            horizontalAlignment = Alignment.End
+        ) {
+            var buttonState by remember { mutableStateOf(false) }
+            val infiniteTransition = rememberInfiniteTransition()
+            val floatAnimation by infiniteTransition.animateFloat(
+                initialValue = 0f,
+                targetValue = 10f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(1000, easing = FastOutSlowInEasing),
+                    repeatMode = RepeatMode.Reverse
+                ),
+                label = "floatAnimation"
+            )
+
+            BtnAdicionar(
+                onClick = { showAddExpenseDialog = true },
+                modifier = Modifier.offset(y = floatAnimation.dp)
+            )
+        }
     }
+
 
     if (showDeleteDialog) {
         AlertDialog(
@@ -621,7 +626,7 @@ fun BtnAdicionar(onClick: () -> Unit, modifier: Modifier = Modifier) {
 
     FloatingActionButton(
         onClick = onClick,
-        containerColor = Amarelo,
+        containerColor = MaterialTheme.colorScheme.primary,
         contentColor = Color.Black,
         elevation = FloatingActionButtonDefaults.elevation(8.dp),
         modifier = modifier
@@ -731,6 +736,7 @@ fun HomeScreenPreview() {
     val navController = rememberNavController()
     // Criando uma instância do AppState
     val appState = AppState(navController)
-
+    MonyTheme {
     HomeScreen(appState = AppState(navController = rememberNavController()), homeViewModel = HomeViewModel(),onExpenseClick={},navController = navController)
 }
+    }

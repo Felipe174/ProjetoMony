@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.example.mony.ui.theme.MonyTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -181,5 +182,6 @@ fun HelpScreen(navController: NavController) {
 @Composable
 fun HelpScreenPreview() {
     val navController = rememberNavController()
+    MonyTheme {
     HelpScreen(navController)
-}
+}}

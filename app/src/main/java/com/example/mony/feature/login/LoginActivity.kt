@@ -61,6 +61,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import com.example.mony.ui.theme.MonyTheme
 import com.google.firebase.auth.GoogleAuthProvider
+
+
 class LoginActivity : ComponentActivity() {
     private lateinit var googleSignInClient: GoogleSignInClient
 
@@ -79,6 +81,12 @@ class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser != null) {
+            navigateToHome()
+            return
+        }
+        
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(getString(R.string.default_web_client_id))
             .requestEmail()

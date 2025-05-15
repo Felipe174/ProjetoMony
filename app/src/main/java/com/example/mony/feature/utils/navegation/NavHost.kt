@@ -1,6 +1,7 @@
 package com.example.mony.feature.utils.navegation
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -127,10 +128,10 @@ fun MyApp(
 
             // Exibe um indicador de carregamento até que o estado das notas seja carregado
             if (notesState.isEmpty()) {
-                // Exibe um indicador de carregamento
                 LoadingScreen()
             } else {
                 val note = notesState.find { it.id == noteId }
+                Log.d("NotaDetalhes", "Nota encontrada: ${note?.title ?: "NÃO ENCONTRADA"}")
 
                 // Se a nota for encontrada, mostra os detalhes
                 if (note != null) {

@@ -24,6 +24,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mony.feature.home.classe.Expense
 import com.example.mony.feature.home.classe.TransactionType
 import com.example.mony.feature.home.viewmodel.HomeViewModel
+import com.example.mony.ui.theme.MonyTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -105,10 +106,12 @@ fun ExpenseDetailScreenPreview() {
             ).asStateFlow()
         }
     }
+    MonyTheme {
+        ExpenseDetailScreen(
+            expenseId = "1",
+            onBack = {},
+            homeViewModel = mockViewModel
+        )
+    }
 
-    ExpenseDetailScreen(
-        expenseId = "1",
-        onBack = {},
-        homeViewModel = mockViewModel
-    )
 }
