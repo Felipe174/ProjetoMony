@@ -260,7 +260,7 @@ fun DrawerMenu(onMenuItemClick: (String) -> Unit) {
                 color = MaterialTheme.colorScheme.onSecondary,
                 modifier = Modifier
                     .align(Alignment.Start)
-                    .padding(start = 10.dp, top = 20.dp, bottom = 10.dp)
+                    .padding(start = 10.dp, top = 35.dp, bottom = 10.dp)
             )
 
             DrawerItem(
@@ -320,7 +320,7 @@ fun DrawerMenu(onMenuItemClick: (String) -> Unit) {
 @Composable
 fun DrawerItem(icon: Int, title: String, onClick: () -> Unit, isSelected: Boolean) {
     val selectedBackgroundColor = Color(android.graphics.Color.parseColor("#fff0f5"))
-    val selectedTextColor = Color(android.graphics.Color.parseColor("#b34db2"))
+    val selectedTextColor = MaterialTheme.colorScheme.primary
     val defaultBackgroundColor = Color.Transparent
     val defaultTextColor = Color.Gray
 
@@ -431,7 +431,7 @@ fun NotasScreenPreview() {
     val navController = rememberNavController()
     val appState = AppState(navController)
 
-    MonyTheme {
+    MonyTheme(darkTheme = false) {
     NotasScreen(
         navController = navController,
         appState = appState,
@@ -439,12 +439,13 @@ fun NotasScreenPreview() {
     )
 }
 }
+
 @Preview(showBackground = true)
 @Composable
 fun NoteEditorPreview() {
     val navController = rememberNavController()
     val appState = AppState(navController)
-    MonyTheme {
+    MonyTheme(darkTheme = false) {
     NoteEditor(
         navController = navController,
         appState = appState,
@@ -455,7 +456,7 @@ fun NoteEditorPreview() {
 @Preview(showBackground = true)
 @Composable
 fun DrawerMenuPreview() {
-    MonyTheme {
+    MonyTheme(darkTheme = false) {
         DrawerMenu { selectedItem ->
             println("Menu item clicked: $selectedItem")
         }

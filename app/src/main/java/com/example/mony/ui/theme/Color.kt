@@ -31,6 +31,7 @@ val AmareloDark = Color(0xFFE09F00)
 
 val GrayLight = Color(0xFFE7E7E7)
 val Gray = Color(0xFF808080)
+val GrayMenos = Color(0xFFC0C0C0)
 val GrayDark = Color(0xFF404040)
 val GrayTop = Color(0xFF181818)
 

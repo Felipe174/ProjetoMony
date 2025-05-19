@@ -167,6 +167,7 @@ open class HomeViewModel : ViewModel() {
         }
     }
 
+    //tratamento de erros
     private fun handleFirestoreError(e: Exception, context: String) {
         Log.e("HomeVM", "$context: ${e.stackTraceToString()}")
 

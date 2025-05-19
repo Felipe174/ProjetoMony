@@ -380,7 +380,7 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel(), o
                                             Text(
                                                 "Renda",
                                                 fontSize = 15.sp,
-                                                color = GrayLight,
+                                                color = MaterialTheme.colorScheme.secondary,
                                                 fontWeight = FontWeight.Bold,
                                                 modifier=Modifier.padding(top=10.dp)
                                             )
@@ -457,7 +457,7 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel(), o
                                             Text(
                                                 "Gasto",
                                                 fontSize = 15.sp,
-                                                color = GrayLight,
+                                                color = MaterialTheme.colorScheme.secondary,
                                                 fontWeight = FontWeight.Bold,
                                                 modifier = Modifier.padding(top = 10.dp)
                                             )
@@ -736,7 +736,7 @@ fun HomeScreenPreview() {
     val navController = rememberNavController()
     // Criando uma instância do AppState
     val appState = AppState(navController)
-    MonyTheme {
+    MonyTheme(darkTheme = false) {
     HomeScreen(appState = AppState(navController = rememberNavController()), homeViewModel = HomeViewModel(),onExpenseClick={},navController = navController)
 }
     }
