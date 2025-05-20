@@ -24,7 +24,6 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-
     signingConfigs {
         create("release") {
             keyAlias = "MyKey"
