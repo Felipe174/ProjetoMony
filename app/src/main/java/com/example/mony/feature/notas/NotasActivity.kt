@@ -1,6 +1,7 @@
 package com.example.mony.feature.notas
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -207,10 +208,12 @@ fun NotasScreen(
                                             } else {
                                                 selectedNotes.add(note)
                                             }
-                                        }
+                                        }else{
                                         if (note.id.isNotEmpty()) {
                                             navController.navigate("notaDetalhes/${note.id}")
+                                            Log.d("NotasScreen", "Clicou na nota com ID: ${note.id}")
                                         }
+                                            }
                                     },
                                     onLongClick = {
                                         isDeleteMode = true
@@ -359,7 +362,7 @@ fun DrawerItem(icon: Int, title: String, onClick: () -> Unit, isSelected: Boolea
 fun NoteEditor(
     navController: NavController,
     appState: AppState,
-    notesViewModel: NotesViewModel
+    notesViewModel: NotesViewModel,
 ) {
     var noteTitle by remember { mutableStateOf("") }
     var noteContent by remember { mutableStateOf("") }

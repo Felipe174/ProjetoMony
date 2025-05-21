@@ -20,6 +20,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,16 +39,22 @@ import com.example.mony.ui.theme.MonyTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotaDetalhes(
-    title: String,
-    content: String,
     navController: NavController,
     notesViewModel: NotesViewModel,
     noteId: String,
 ) {
-    var editableTitle by remember { mutableStateOf(title) }
-    var editableContent by remember { mutableStateOf(content) }
+    val notes by notesViewModel.notes.collectAsState()
+    val note = notes.find { it.id == noteId }
+
+    var editableTitle by remember { mutableStateOf(note?.title ?: "") }
+    var editableContent by remember { mutableStateOf(note?.content ?: "") }
     var isModified by remember { mutableStateOf(false) }
     var lastModified by remember { mutableStateOf(getCurrentDateTime()) }
+
+    if (note == null) {
+        Text("Nota não encontrada.", modifier = Modifier.padding(16.dp))
+        return
+    }
 
     // Atualiza a data de modificação a cada segundo enquanto estiver editando
     LaunchedEffect(isModified) {
@@ -77,21 +84,20 @@ fun NotaDetalhes(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Exibe a data de modificação
             Text(
                 text = "Última alteração foi em $lastModified",
                 color = Color.Gray,
-                modifier = Modifier.padding(2.dp).align(Alignment.End)
+                modifier = Modifier.padding(2.dp).align(Alignment.End),
+                fontSize = MaterialTheme.typography.bodySmall.fontSize
             )
 
             Spacer(modifier = Modifier.height(2.dp))
 
-            // Campo de título editável
             OutlinedTextField(
                 value = editableTitle,
                 onValueChange = {
                     editableTitle = it
-                    isModified = it != title || editableContent != content
+                    isModified = it != note.title || editableContent != note.content
                 },
                 label = { Text("Título") },
                 modifier = Modifier.fillMaxWidth(),
@@ -99,12 +105,11 @@ fun NotaDetalhes(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Campo de conteúdo editável
             OutlinedTextField(
                 value = editableContent,
                 onValueChange = {
                     editableContent = it
-                    isModified = it != content || editableTitle != title
+                    isModified = it != note.content || editableTitle != note.title
                 },
                 label = { Text("Conteúdo") },
                 modifier = Modifier
@@ -115,13 +120,13 @@ fun NotaDetalhes(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Botão de salvar se houver alterações
             if (isModified) {
                 Button(
                     onClick = {
-                        // Salva a nota
-                        notesViewModel.updateNote(NotaItem(id = noteId, title = editableTitle, content = editableContent))
-                        lastModified = getCurrentDateTime() // Atualiza a data de modificação ao salvar
+                        notesViewModel.updateNote(
+                            NotaItem(id = note.id, title = editableTitle, content = editableContent)
+                        )
+                        lastModified = getCurrentDateTime()
                         navController.popBackStack()
                     },
                     modifier = Modifier.align(Alignment.End)
@@ -151,8 +156,6 @@ fun NotaDetalhesPreview() {
 
     MonyTheme {
     NotaDetalhes(
-        title = "Exemplo de Título",
-        content = "Este é o conteúdo completo da nota.",
         navController = navController,
         notesViewModel = notesViewModel,
         noteId = "1",

@@ -136,8 +136,6 @@ fun MyApp(
                 // Se a nota for encontrada, mostra os detalhes
                 if (note != null) {
                     NotaDetalhes(
-                        title = note.title,
-                        content = note.content,
                         navController = navController,
                         notesViewModel = notesViewModel,
                         noteId = note.id

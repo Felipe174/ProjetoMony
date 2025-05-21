@@ -1,11 +1,13 @@
 package com.example.mony.feature.notas
 
+import android.util.Log
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -14,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -40,9 +43,8 @@ fun NotasItem(
     isSelected: Boolean,
     modifier: Modifier = Modifier
 ) {
-    // Definindo animações para a mudança de estado de seleção
     val backgroundColor by animateColorAsState(
-        targetValue = if (isSelected) Color.LightGray else Color.White
+        targetValue = if (isSelected) Color.LightGray else MaterialTheme.colorScheme.background
     )
 
     val alpha by animateFloatAsState(
@@ -51,25 +53,29 @@ fun NotasItem(
     )
 
     ElevatedCard(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(2.dp)
-            .clickable(onClick = onClick)
-            .border(0.1.dp, MaterialTheme.colorScheme.secondary,RoundedCornerShape(10.dp))
-            .background(MaterialTheme.colorScheme.background) // Usando animação para o fundo
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onLongPress = { onLongClick() } // Lida com o clique longo
-                )
-            }
-            .graphicsLayer(alpha = alpha), // Aplicando a animação de opacidade
-        colors = androidx.compose.material3.CardDefaults.cardColors(MaterialTheme.colorScheme.background),
-        elevation = androidx.compose.material3.CardDefaults.cardElevation(3.dp),
-            
+            .graphicsLayer(alpha = alpha)
+            .background(backgroundColor)
+            .combinedClickable(
+                onClick = {
+                    Log.d("NotasItem", "Clique simples: ${note.title}")
+                    onClick()
+                },
+                onLongClick = {
+                    Log.d("NotasItem", "Clique longo: ${note.title}")
+                    onLongClick()
+                }
+            )
+            .border(0.1.dp, MaterialTheme.colorScheme.secondary, RoundedCornerShape(10.dp)),
+        colors = CardDefaults.cardColors(containerColor = backgroundColor),
+        elevation = CardDefaults.cardElevation(3.dp)
     ) {
-        Column(modifier = Modifier
-            .padding(16.dp)
-            .background(MaterialTheme.colorScheme.background)) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+        ) {
             Text(
                 text = note.title,
                 fontWeight = FontWeight.Bold,
