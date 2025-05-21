@@ -23,10 +23,11 @@ private val DarkColorScheme = darkColorScheme(
     onPrimary = GrayTop,
     secondary = GrayDark,
     onSecondary = White,
-    background = BlackMenos,
+    background = BlackMenos,//fundo
     surface = Black,
     onBackground = Gray,
     onSurface = White,
+
     //Gradiente
     surfaceContainerLow = Roxo,
     surfaceContainerLowest = RoxoMedio,
@@ -45,6 +46,7 @@ private val LightColorScheme = lightColorScheme(
     onSurface = TextColor,
     onError = Gray,
 
+    //Gradiente
     surfaceContainerLow = AmareloClaro,
     surfaceContainerLowest = Amarelo,
     surfaceContainerHighest = AmareloMedio,

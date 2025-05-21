@@ -70,7 +70,7 @@ fun NotaDetalhes(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp)
+                .padding(start=16.dp, end=16.dp, bottom=16.dp)
         ) {
             TopAppBar(
                 title = { Text("Detalhes da Nota", modifier = Modifier.padding(start = 12.dp)) },
@@ -82,7 +82,7 @@ fun NotaDetalhes(
                 colors = TopAppBarDefaults.topAppBarColors(MaterialTheme.colorScheme.onPrimary)
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(5.dp))
 
             Text(
                 text = "Última alteração foi em $lastModified",

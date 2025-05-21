@@ -87,7 +87,7 @@ fun NotasItem(
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = note.content,
-                maxLines = 2,
+                maxLines = 1,
                 color = MaterialTheme.colorScheme.secondary,
                 overflow = TextOverflow.Ellipsis
             )
