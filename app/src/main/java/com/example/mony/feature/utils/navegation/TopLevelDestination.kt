@@ -7,13 +7,11 @@ import androidx.compose.material.icons.filled.NoteAlt
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.MoreHoriz
 import androidx.compose.material.icons.outlined.NoteAlt
-import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.mony.R
-import com.example.mony.ui.theme.AmareloClaro
 
 data class TopLevelDestination(
     val route: String,

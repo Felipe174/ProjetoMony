@@ -29,6 +29,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -36,6 +37,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.mony.feature.home.classe.TransactionType
 import com.example.mony.feature.home.classe.TypeSelectionDialog
+import com.example.mony.ui.theme.MonyTheme
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -54,95 +56,96 @@ fun AddDialog(
     var showDatePicker by remember { mutableStateOf(false) }
     val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
 
-    if (showDialog) {
-        AlertDialog(
-            containerColor = MaterialTheme.colorScheme.onSecondary,
-            onDismissRequest = onDismiss,
-            title = { Text("Adicionar Transação") },
-            text = {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    AmountInput(
-                        value = amount,
-                        onValueChange = { amount = it }
-                    )
-
-                    TypeSelector(
-                        selectedType = selectedType,
-                        onSelectClick = { showTypeDialog = true }
-                    )
-
-                    DateSelector(
-                        selectedDate = selectedDate,
-                        formatter = dateFormatter,
-                        onSelectClick = { showDatePicker = true }
-                    )
-                }
-            },
-            confirmButton = {
-                ConfirmButton(
-                    enabled = selectedType != null && amount.isNotBlank(),
-                    onConfirm = {
-                        onAdd(
-                            amount.toDoubleOrNull() ?: 0.0,
-                            selectedType ?: TransactionType.BILLS,
-                            selectedDate
+    MonyTheme {
+        if (showDialog) {
+            AlertDialog(
+                containerColor = MaterialTheme.colorScheme.background,
+                onDismissRequest = onDismiss,
+                title = { Text("Adicionar Transação", color = MaterialTheme.colorScheme.onSecondary) },
+                text = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        AmountInput(
+                            value = amount,
+                            onValueChange = { amount = it }
                         )
-                        onDismiss()
+
+                        TypeSelector(
+                            selectedType = selectedType,
+                            onSelectClick = { showTypeDialog = true }
+                        )
+
+                        DateSelector(
+                            selectedDate = selectedDate,
+                            formatter = dateFormatter,
+                            onSelectClick = { showDatePicker = true }
+                        )
                     }
-                )
-            },
-            dismissButton = {
-                DismissButton(onDismiss = onDismiss)
-            }
-        )
-    }
-
-    if (showTypeDialog) {
-        TypeSelectionDialog(
-            showDialog = true,
-            onDismiss = { showTypeDialog = false },
-            onSelect = { selectedType = it }
-        )
-    }
-
-    if (showDatePicker) {
-        val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = selectedDate
-        )
-
-        CustomDatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        datePickerState.selectedDateMillis?.let {
-                            selectedDate = it
+                },
+                confirmButton = {
+                    ConfirmButton(
+                        enabled = selectedType != null && amount.isNotBlank(),
+                        onConfirm = {
+                            onAdd(
+                                amount.toDoubleOrNull() ?: 0.0,
+                                selectedType ?: TransactionType.BILLS,
+                                selectedDate
+                            )
+                            onDismiss()
                         }
-                        showDatePicker = false
+                    )
+                },
+                dismissButton = {
+                    DismissButton(onDismiss = onDismiss)
+                }
+            )
+        }
+
+        if (showTypeDialog) {
+            TypeSelectionDialog(
+                showDialog = true,
+                onDismiss = { showTypeDialog = false },
+                onSelect = { selectedType = it }
+            )
+        }
+
+        if (showDatePicker) {
+            val datePickerState = rememberDatePickerState(
+                initialSelectedDateMillis = selectedDate
+            )
+
+            CustomDatePickerDialog(
+                onDismissRequest = { showDatePicker = false },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            datePickerState.selectedDateMillis?.let {
+                                selectedDate = it
+                            }
+                            showDatePicker = false
+                        }
+                    ) {
+                        Text("OK")
                     }
-                ) {
-                    Text("OK")
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { showDatePicker = false }
+                    ) {
+                        Text("Cancelar")
+                    }
+                },
+                content = { // Nome do parâmetro corrigido
+                    DatePicker(
+                        state = datePickerState
+                    )
                 }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { showDatePicker = false }
-                ) {
-                    Text("Cancelar")
-                }
-            },
-            content = { // Nome do parâmetro corrigido
-                DatePicker(
-                    state = datePickerState
-                )
-            }
-        )
+            )
+        }
     }
 }
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -178,7 +181,7 @@ private fun AmountInput(
             imeAction = ImeAction.Done
         ),
         modifier = Modifier.fillMaxWidth(),
-        prefix = { Text("€") }
+        prefix = { Text("€",color = MaterialTheme.colorScheme.onSecondary) }
     )
 }
 
@@ -191,13 +194,14 @@ private fun TypeSelector(
         onClick = onSelectClick,
         modifier = Modifier.fillMaxWidth(),
         colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.onSecondary,
+            containerColor = MaterialTheme.colorScheme.background,
             contentColor = MaterialTheme.colorScheme.onSurfaceVariant
         )
     ) {
         Text(
             text = selectedType?.let { stringResource(it.labelRes) } ?: "Selecione o tipo",
-            style = MaterialTheme.typography.bodyMedium
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSecondary
         )
     }
 }
@@ -212,7 +216,7 @@ private fun DateSelector(
         onClick = onSelectClick,
         modifier = Modifier.fillMaxWidth(),
         colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.onSecondary,
+            containerColor = MaterialTheme.colorScheme.background,
             contentColor = MaterialTheme.colorScheme.onSurfaceVariant
         )
     ) {
@@ -223,7 +227,8 @@ private fun DateSelector(
         Spacer(Modifier.width(8.dp))
         Text(
             text = "Data: ${formatter.format(Date(selectedDate))}",
-            style = MaterialTheme.typography.bodyMedium
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSecondary
         )
     }
 }
@@ -238,7 +243,7 @@ private fun ConfirmButton(
         enabled = enabled,
         modifier = Modifier.padding(8.dp)
     ) {
-        Text("Adicionar")
+        Text("Adicionar", color = MaterialTheme.colorScheme.primary)
     }
 }
 
@@ -251,7 +256,7 @@ private fun DismissButton(
         onClick = onDismiss,
         modifier = Modifier.padding(8.dp)
     ) {
-        Text(  "Cancelar")
+        Text(  "Cancelar", color = Color.Red)
     }
 }
 
@@ -259,9 +264,11 @@ private fun DismissButton(
 @Composable
 fun AddDialogPreview() {
     var showDialog by remember { mutableStateOf(true) }
-    AddDialog(
-        showDialog = showDialog,
-        onDismiss = { showDialog = false },
-        onAdd = { _, _, _ -> }
-    )
+    MonyTheme(darkTheme = false) {
+        AddDialog(
+            showDialog = showDialog,
+            onDismiss = { showDialog = false },
+            onAdd = { _, _, _ -> }
+        )
+    }
 }

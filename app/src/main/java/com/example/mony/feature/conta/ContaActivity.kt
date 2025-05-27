@@ -14,19 +14,18 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.TabRowDefaults.Divider
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -41,7 +40,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Color.Companion.Red
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -64,15 +62,7 @@ import com.example.mony.feature.notas.viewmodel.NotesViewModel
 import com.example.mony.feature.utils.AppState
 import com.example.mony.feature.utils.navegation.MyApp
 import com.example.mony.feature.utils.navegation.getTopLevelDestinations
-import com.example.mony.ui.theme.Amarelo
-import com.example.mony.ui.theme.AmareloMC
-import com.example.mony.ui.theme.Black
 import com.example.mony.ui.theme.MonyTheme
-import com.example.mony.ui.theme.RedLight
-import com.example.mony.ui.theme.Roxo
-import com.example.mony.ui.theme.RoxoDark
-import com.example.mony.ui.theme.RoxoMedio
-import com.example.mony.ui.theme.White
 import com.google.firebase.auth.FirebaseAuth
 
 class ContaActivity : ComponentActivity() {
@@ -98,14 +88,11 @@ class ContaActivity : ComponentActivity() {
         }
     }
 }
-
 @Composable
-fun ContaScreen(appState: AppState, navController: NavController, contaViewModel: ContaViewModel, onLogout: () -> Unit) {
+fun ContaScreen(appState: AppState, navController: NavController, contaViewModel: ContaViewModel) {
     val userProfile = contaViewModel.userProfile.collectAsState().value
     val context = LocalContext.current
     val topLevelDestinations = getTopLevelDestinations()
-
-
 
     NavigationSuiteScaffold(
         navigationSuiteItems = {
@@ -134,106 +121,103 @@ fun ContaScreen(appState: AppState, navController: NavController, contaViewModel
             }
         }
     ) {
-
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(),
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = 16.dp), // Padding extra para o scroll não cortar conteúdo
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            ProfileHeader(userProfile = userProfile,navController)
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Nome e e-mail
-            Text(
-                text = userProfile?.name ?: "Carregando...",
-                fontSize = 26.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 35.dp),
-                color = MaterialTheme.colorScheme.primary
-            )
-            Text(
-                text = userProfile?.email ?: "Carregando...",
-                fontSize = 18.sp,
-                modifier = Modifier.padding(top = 5.dp),
-                color = MaterialTheme.colorScheme.onSecondary
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Card(
-                modifier = Modifier
-                    .padding(start = 10.dp, end = 10.dp, top = 10.dp),
-                colors = CardDefaults.cardColors(MaterialTheme.colorScheme.background),
-            ) {
-
-                Text(
-                    "Configuração da Conta", fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.secondary,
-                    modifier = Modifier
-                        .align(Alignment.Start)
-                        .padding(start = 10.dp, top = 10.dp, bottom = 10.dp)
-                )
-
-                // Menu de opções com navegação
-                MenuItem(icon = R.drawable.ic_user, title = "Informações da Conta", onClick = {navController.navigate("info")},isLogout = false)
-
-                Spacer(modifier = Modifier.height(5.dp))
-
-                MenuItem(icon = R.drawable.escudo, title = "Segurança e Senha", onClick = { navController.navigate("secure")},isLogout = false)
-
+            item {
+                ProfileHeader(userProfile = userProfile, navController)
+                Spacer(modifier = Modifier.height(16.dp))
             }
 
-
-            Card(
-                modifier = Modifier
-                    .padding(start = 10.dp, end = 10.dp, top = 10.dp),
-                colors = CardDefaults.cardColors(MaterialTheme.colorScheme.background),
-            ) {
+            item {
                 Text(
-                    "Outros", fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.secondary,
-                    modifier = Modifier
-                        .align(Alignment.Start)
-                        .padding(start = 10.dp, top = 10.dp, bottom = 10.dp)
+                    text = userProfile?.name ?: "Carregando...",
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 35.dp),
+                    color = MaterialTheme.colorScheme.primary
                 )
+                Text(
+                    text = userProfile?.email ?: "Carregando...",
+                    fontSize = 18.sp,
+                    modifier = Modifier.padding(top = 5.dp),
+                    color = MaterialTheme.colorScheme.onSecondary
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+            }
 
-                MenuItem(icon = R.drawable.ajuda, title = "Ajuda", onClick = {navController.navigate("help")},isLogout = false)
+            item {
+                Card(
+                    modifier = Modifier
+                        .padding(start = 10.dp, end = 10.dp, top = 10.dp),
+                    colors = CardDefaults.cardColors(MaterialTheme.colorScheme.background),
+                ) {
+                    Text(
+                        "Configuração da Conta", fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier
+                            .align(Alignment.Start)
+                            .padding(start = 10.dp, top = 10.dp, bottom = 10.dp)
+                    )
 
+                    MenuItem(icon = R.drawable.ic_user, title = "Informações da Conta", onClick = { navController.navigate("info") })
+                    Spacer(modifier = Modifier.height(5.dp))
+                    MenuItem(icon = R.drawable.escudo, title = "Segurança e Senha", onClick = { navController.navigate("secure") })
+                }
+            }
+
+            item {
+                Card(
+                    modifier = Modifier
+                        .padding(start = 10.dp, end = 10.dp, top = 10.dp),
+                    colors = CardDefaults.cardColors(MaterialTheme.colorScheme.background),
+                ) {
+                    Text(
+                        "Outros", fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier
+                            .align(Alignment.Start)
+                            .padding(start = 10.dp, top = 10.dp, bottom = 10.dp)
+                    )
+
+                    MenuItem(icon = R.drawable.ajuda, title = "Ajuda", onClick = { navController.navigate("help") })
+                    Spacer(modifier = Modifier.height(5.dp))
+                    MenuItem(icon = R.drawable.more, title = "Sobre Nós", onClick = { navController.navigate("about") })
+                }
+            }
+
+            item {
                 Spacer(modifier = Modifier.height(5.dp))
 
-                MenuItem(icon = R.drawable.more, title = "Sobre Nós", onClick = {navController.navigate("about")}, isLogout = false)
-
-            }
-            Spacer(modifier = Modifier.height(5.dp))
-
-            Card(
-                modifier = Modifier
-                    .padding(start = 10.dp, end = 10.dp, top = 10.dp),
-                colors = CardDefaults.cardColors(MaterialTheme.colorScheme.background),
-            ) {
-                MenuItem(
-                    icon = R.drawable.sair,
-                    title = "Logout",
-                    onClick = {
-                        FirebaseAuth.getInstance().signOut()
-
-                        Toast.makeText(context, "Desconectado com sucesso", Toast.LENGTH_SHORT).show()
-
-                        val intent = Intent(context, LoginActivity::class.java)
-                        context.startActivity(intent)
-                        (context as? Activity)?.finish()
-                    },
-                    isLogout = true
-                )
-
+                Card(
+                    modifier = Modifier
+                        .padding(start = 10.dp, end = 10.dp, top = 10.dp),
+                    colors = CardDefaults.cardColors(MaterialTheme.colorScheme.background),
+                ) {
+                    MenuItem(
+                        icon = R.drawable.sair,
+                        title = "Logout",
+                        onClick = {
+                            FirebaseAuth.getInstance().signOut()
+                            Toast.makeText(context, "Desconectado com sucesso", Toast.LENGTH_SHORT).show()
+                            val intent = Intent(context, LoginActivity::class.java)
+                            context.startActivity(intent)
+                            (context as? Activity)?.finish()
+                        },
+                        isLogout = true
+                    )
+                }
             }
         }
     }
 }
+
+
 
 @Composable
 fun ProfileHeader(userProfile: UserProfile?, navController: NavController) {
@@ -393,11 +377,11 @@ fun ContaScreenPreview() {
 
     // Criando um AppState fictício
     val appState = remember { AppState(navController) }
-
+MonyTheme(darkTheme = false) {
     ContaScreen(
         appState = appState,
         navController = navController,
-        contaViewModel = contaViewModel,
-        onLogout = {})
+        contaViewModel = contaViewModel
+    )
 
-}
+}}

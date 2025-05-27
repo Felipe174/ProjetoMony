@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.example.mony.feature.utils.navegation
 
 import android.annotation.SuppressLint
@@ -21,7 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -44,7 +45,6 @@ import com.example.mony.feature.notas.NoteEditor
 import com.example.mony.feature.notas.viewmodel.NotesViewModel
 import com.example.mony.feature.utils.AppState
 import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 
 @SuppressLint("StateFlowValueCalledInComposition")
@@ -114,7 +114,7 @@ fun MyApp(
 
         // Tela de edição de nota
         composable("noteEditor") {
-            NoteEditor(navController, appState, notesViewModel)
+            NoteEditor(navController, notesViewModel)
         }
 
         // Tela de detalhes da nota
@@ -149,7 +149,7 @@ fun MyApp(
 
 
         // Outras telas
-        composable("mais") { ContaScreen(appState, navController, contaViewModel, onLogout = {}) }
+        composable("mais") { ContaScreen(appState, navController, contaViewModel) }
         composable("info") { InfoScreen(navController, contaViewModel, googleSignInClient ) }
         composable("secure") { SecureScreen(navController) }
         composable("help") { HelpScreen(navController) }

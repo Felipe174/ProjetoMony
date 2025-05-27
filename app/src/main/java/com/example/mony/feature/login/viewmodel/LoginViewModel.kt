@@ -24,6 +24,7 @@ sealed class LoginState {
     data class Error(val message: String) : LoginState()
 }
 
+@Suppress("DEPRECATION")
 class LoginViewModel(
     private val auth: FirebaseAuth = Firebase.auth
 ) : ViewModel() {

@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 
 class ContaViewModel : ViewModel() {
 
-    val _userProfile = MutableStateFlow<UserProfile?>(null)
+    private val _userProfile = MutableStateFlow<UserProfile?>(null)
     val userProfile: StateFlow<UserProfile?> = _userProfile
 
     init {

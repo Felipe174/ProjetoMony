@@ -1,29 +1,22 @@
 package com.example.mony.feature.home
 
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -35,8 +28,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -47,45 +38,32 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBackIosNew
-import androidx.compose.material.icons.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Done
-import androidx.compose.material.icons.filled.Hardware
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuite
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItemColors
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -95,39 +73,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.constraintlayout.compose.HorizontalAlign
-import androidx.glance.color.DynamicThemeColorProviders.background
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import coil.compose.rememberAsyncImagePainter
 import com.example.mony.R
 import com.example.mony.feature.conta.viewmodel.ContaViewModel
 import com.example.mony.feature.home.classe.Expense
@@ -139,25 +101,14 @@ import com.example.mony.feature.notas.viewmodel.NotesViewModel
 import com.example.mony.feature.utils.AppState
 import com.example.mony.feature.utils.navegation.MyApp
 import com.example.mony.feature.utils.navegation.getTopLevelDestinations
-import com.example.mony.ui.theme.Amarelo
-import com.example.mony.ui.theme.AmareloClaro
-import com.example.mony.ui.theme.AmareloDark
-import com.example.mony.ui.theme.AmareloMC
-import com.example.mony.ui.theme.AmareloMedio
 import com.example.mony.ui.theme.Black
-import com.example.mony.ui.theme.Gray
-import com.example.mony.ui.theme.GrayLight
 import com.example.mony.ui.theme.GreenLight
 import com.example.mony.ui.theme.MonyTheme
 import com.example.mony.ui.theme.RedLight
-import com.example.mony.ui.theme.White
 import com.google.accompanist.pager.HorizontalPagerIndicator
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import java.text.NumberFormat
-import java.text.SimpleDateFormat
-import java.time.YearMonth
-import java.time.ZoneId
 import java.util.Calendar
 import java.util.Locale
 
@@ -353,9 +304,6 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel(), o
 
 
                                     Column(Modifier.fillMaxSize().padding(3.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                                        val animatedBalance by animateFloatAsState(
-                                            targetValue = expenses.sumOf { it.amount }.toFloat()
-                                        )
                                         Row(
                                             modifier=Modifier
                                                 .fillMaxWidth()
@@ -423,15 +371,12 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel(), o
 
                                     ) {
 
-                                        val totalIncome = remember(filteredExpenses) {
+                                        remember(filteredExpenses) {
                                             filteredExpenses.filter { it.type.isIncome }.sumOf { it.amount }
                                         }
-                                        val totalExpenses = remember(filteredExpenses) {
+                                        remember(filteredExpenses) {
                                             filteredExpenses.filter { !it.type.isIncome }.sumOf { it.amount }
                                         }
-
-                                        val animatedIncome by animateFloatAsState(totalIncome.toFloat())
-                                        val animatedExpense by animateFloatAsState(totalExpenses.toFloat())
 
                                         Row(
                                             modifier=Modifier
@@ -583,7 +528,6 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel(), o
             verticalArrangement = Arrangement.Bottom,
             horizontalAlignment = Alignment.End
         ) {
-            var buttonState by remember { mutableStateOf(false) }
             val infiniteTransition = rememberInfiniteTransition()
             val floatAnimation by infiniteTransition.animateFloat(
                 initialValue = 0f,
@@ -735,7 +679,7 @@ fun HomeScreenPreview() {
     // Usando um NavController simples
     val navController = rememberNavController()
     // Criando uma instância do AppState
-    val appState = AppState(navController)
+    AppState(navController)
     MonyTheme(darkTheme = false) {
     HomeScreen(appState = AppState(navController = rememberNavController()), homeViewModel = HomeViewModel(),onExpenseClick={},navController = navController)
 }

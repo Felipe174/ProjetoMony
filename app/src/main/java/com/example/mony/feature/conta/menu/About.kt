@@ -41,90 +41,91 @@ import com.example.mony.ui.theme.MonyTheme
 @Composable
 fun AboutScreen(navController: NavController) {
     // Usando Scaffold para incluir a TopAppBar corretamente
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Sobre", fontWeight = FontWeight.Bold, fontSize = 20.sp) },
-                navigationIcon = {
-                    IconButton(onClick = { navController.navigate("mais") }) {
-                        Icon(
-                            imageVector = Icons.Filled.ArrowBackIosNew,
-                            contentDescription = "Voltar"
+    MonyTheme {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Sobre", fontWeight = FontWeight.Bold, fontSize = 20.sp,color = MaterialTheme.colorScheme.onSecondary) },
+                    navigationIcon = {
+                        IconButton(onClick = { navController.navigate("mais") }) {
+                            Icon(
+                                imageVector = Icons.Filled.ArrowBackIosNew,
+                                contentDescription = "Voltar"
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(MaterialTheme.colorScheme.background)
+                )
+            }
+        ) { innerPadding ->
+            // LazyColumn com o padding do Scaffold aplicado corretamente
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding) // Isso corrige o padding
+            ) {
+
+                item {
+                    SobreText(navController) // Chamando o conteúdo da tela
+                }
+
+                // Itens adicionais (como o MenuItemSobre)
+                item {
+                    Card(
+                        elevation = CardDefaults.cardElevation(1.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 10.dp, end = 10.dp, bottom = 5.dp),
+                        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.background)
+                    ) {
+                        MenuItemSobre(
+                            title = "Termos de Uso",
+                            onClick = { navController.navigate("TermosDeUso") }
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(MaterialTheme.colorScheme.onPrimary)
-            )
-        }
-    ) { innerPadding ->
-        // LazyColumn com o padding do Scaffold aplicado corretamente
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding) // Isso corrige o padding
-                .background(Color.White)
-        ) {
-
-            item {
-                    SobreText(navController) // Chamando o conteúdo da tela
-            }
-
-            // Itens adicionais (como o MenuItemSobre)
-            item {
-                Card(
-                    elevation = CardDefaults.cardElevation(1.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start=10.dp, end=10.dp, bottom = 5.dp),
-                    colors = CardDefaults.cardColors(Color.White)
-                ) {
-                    MenuItemSobre(
-                        title = "Termos de Uso",
-                        onClick = { navController.navigate("TermosDeUso") }
-                    )
                 }
-            }
-            item {
-                Card(
-                    elevation = CardDefaults.cardElevation(1.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start=10.dp, end=10.dp, bottom = 5.dp),
-                    colors = CardDefaults.cardColors(Color.White)
-                ) {
+                item {
+                    Card(
+                        elevation = CardDefaults.cardElevation(1.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 10.dp, end = 10.dp, bottom = 5.dp),
+                        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.background)
+                    ) {
 
-                    MenuItemSobre(
-                        title = "Privacidade",
-                        onClick = { navController.navigate("Privacidade") }
-                    )
+                        MenuItemSobre(
+                            title = "Privacidade",
+                            onClick = { navController.navigate("Privacidade") }
+                        )
+                    }
                 }
-            }
-            item {
-                Card(
-                    elevation = CardDefaults.cardElevation(1.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start=10.dp, end=10.dp, bottom = 5.dp),
-                    colors = CardDefaults.cardColors(Color.White)
-                ) {
-                    MenuItemSobre(
-                        title = "Licenças",
-                        onClick = { navController.navigate("Licencas") }
-                    )
+                item {
+                    Card(
+                        elevation = CardDefaults.cardElevation(1.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 10.dp, end = 10.dp, bottom = 5.dp),
+                        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.background)
+                    ) {
+                        MenuItemSobre(
+                            title = "Licenças",
+                            onClick = { navController.navigate("Licencas") }
+                        )
+                    }
                 }
-            }
-            item {
-                Card(
-                    elevation = CardDefaults.cardElevation(1.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start=10.dp, end=10.dp, bottom = 5.dp),
-                    colors = CardDefaults.cardColors(Color.White)
-                ) {
-                    MenuItemSobre(
-                        title = "Agradecimentos",
-                        onClick = { navController.navigate("Agradecimentos") }
-                    )
+                item {
+                    Card(
+                        elevation = CardDefaults.cardElevation(1.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 10.dp, end = 10.dp, bottom = 5.dp),
+                        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.background)
+                    ) {
+                        MenuItemSobre(
+                            title = "Agradecimentos",
+                            onClick = { navController.navigate("Agradecimentos") }
+                        )
+                    }
                 }
             }
         }
@@ -138,7 +139,7 @@ fun SobreText(navController: NavController) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(top=10.dp, start=10.dp, end=10.dp, bottom = 15.dp),
-        colors = CardDefaults.cardColors(Color.White)
+        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier
@@ -172,7 +173,8 @@ fun SobreText(navController: NavController) {
                 """.trimIndent(),
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Normal,
-                modifier = Modifier.align(Alignment.Start)
+                modifier = Modifier.align(Alignment.Start),
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
@@ -186,14 +188,15 @@ fun MenuItemSobre(title: String, onClick: () -> Unit) {
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .padding(10.dp)
-            .background(Color.White),
+            .background(MaterialTheme.colorScheme.background),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = title,
             modifier = Modifier.align(Alignment.CenterVertically),
             fontSize = 16.sp,
-            fontWeight = FontWeight.Medium
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSecondary
         )
         Spacer(modifier = Modifier.weight(1f))
         Icon(
@@ -210,6 +213,6 @@ fun MenuItemSobre(title: String, onClick: () -> Unit) {
 @Composable
 fun AboutScreenPreview() {
     val navController = rememberNavController()
-    MonyTheme {
+    MonyTheme(darkTheme = false) {
     AboutScreen(navController)
 }}

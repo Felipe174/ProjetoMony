@@ -35,7 +35,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItemDefaults.containerColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.OutlinedTextField
@@ -57,7 +56,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -75,7 +73,6 @@ import com.example.mony.feature.notas.viewmodel.NotesViewModel
 import com.example.mony.feature.utils.AppState
 import com.example.mony.feature.utils.navegation.MyApp
 import com.example.mony.feature.utils.navegation.getTopLevelDestinations
-import com.example.mony.ui.theme.Amarelo
 import com.example.mony.ui.theme.MonyTheme
 import kotlinx.coroutines.launch
 
@@ -127,10 +124,10 @@ fun NotasScreen(
                 when (selectedItem) {
                     "Notas" -> appState.navigateToTopLevelDestination("notes")
                     "Arquivos" -> appState.navigateToTopLevelDestination("arquivosScreen")
-                    "Configurações" -> appState.navigateToTopLevelDestination("configScreen")
+                    "Configuração" -> appState.navigateToTopLevelDestination("mais")
                 }
                 scope.launch { drawerState.close() }
-            })
+            }, navController = navController)
         }
     ) {
         NavigationSuiteScaffold(
@@ -195,10 +192,6 @@ fun NotasScreen(
                             }
                         } else {
                             items(notesState) { note ->
-                                val alpha by animateFloatAsState(
-                                    targetValue = if (selectedNotes.contains(note)) 0.5f else 1f,
-                                    animationSpec = tween(durationMillis = 300)
-                                )
                                 NotasItem(
                                     note = note,
                                     onClick = {
@@ -247,7 +240,7 @@ fun NotasScreen(
 
 
 @Composable
-fun DrawerMenu(onMenuItemClick: (String) -> Unit) {
+fun DrawerMenu(onMenuItemClick: (String) -> Unit, navController: NavController) {
     var selectedItemIndex by remember { mutableStateOf(0) }
 
     Surface {
@@ -311,7 +304,8 @@ fun DrawerMenu(onMenuItemClick: (String) -> Unit) {
                 title = "Configuração",
                 onClick = {
                     selectedItemIndex = 2
-                    onMenuItemClick("configScreen")
+                    navController.navigate("mais")
+                    onMenuItemClick("mais")
                 },
                 isSelected = selectedItemIndex == 2
             )
@@ -327,8 +321,8 @@ fun DrawerItem(icon: Int, title: String, onClick: () -> Unit, isSelected: Boolea
     val defaultBackgroundColor = Color.Transparent
     val defaultTextColor = Color.Gray
 
-    val backgroundColor = if (isSelected) selectedBackgroundColor else defaultBackgroundColor
-    val textColor = if (isSelected) selectedTextColor else defaultTextColor
+    if (isSelected) selectedBackgroundColor else defaultBackgroundColor
+    if (isSelected) selectedTextColor else defaultTextColor
     val iconColor = if (isSelected) selectedTextColor else defaultTextColor
 
     Row(
@@ -361,7 +355,6 @@ fun DrawerItem(icon: Int, title: String, onClick: () -> Unit, isSelected: Boolea
 @Composable
 fun NoteEditor(
     navController: NavController,
-    appState: AppState,
     notesViewModel: NotesViewModel,
 ) {
     var noteTitle by remember { mutableStateOf("") }
@@ -447,11 +440,10 @@ fun NotasScreenPreview() {
 @Composable
 fun NoteEditorPreview() {
     val navController = rememberNavController()
-    val appState = AppState(navController)
+    AppState(navController)
     MonyTheme(darkTheme = false) {
     NoteEditor(
         navController = navController,
-        appState = appState,
         notesViewModel = NotesViewModel()
     )
 }}
@@ -460,8 +452,9 @@ fun NoteEditorPreview() {
 @Composable
 fun DrawerMenuPreview() {
     MonyTheme(darkTheme = false) {
-        DrawerMenu { selectedItem ->
-            println("Menu item clicked: $selectedItem")
-        }
+        DrawerMenu(
+            onMenuItemClick = { },
+            navController = rememberNavController()
+        )
     }
 }

@@ -2,7 +2,6 @@ package com.example.mony.feature.login
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -30,10 +29,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -49,17 +45,13 @@ import com.example.mony.R
 import com.example.mony.feature.home.HomeActivity
 import com.example.mony.feature.login.viewmodel.LoginState
 import com.example.mony.feature.login.viewmodel.LoginViewModel
+import com.example.mony.ui.theme.MonyTheme
 import com.example.mony.ui.theme.Roxo
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import com.example.mony.ui.theme.MonyTheme
 import com.google.firebase.auth.GoogleAuthProvider
 
 

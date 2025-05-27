@@ -14,7 +14,7 @@ val TextColor2 = Color(0xFF535252)
 val GreenColor = Color(0xFF4CAF50)
 val GreenLight = Color(0xFF567256)
 val RedColor = Color(0xFFFD2B1E)
-val RedLight = Color(0xFF755B58)
+val RedLight = Color(0xFFFF9389)
 val Blue = Color(0xFF3E8FAB)
 
 val RoxoClaro = Color(0xFFE0D0FF)

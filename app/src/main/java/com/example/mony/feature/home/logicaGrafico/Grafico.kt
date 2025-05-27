@@ -8,7 +8,6 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -43,7 +42,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -75,13 +73,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mony.feature.home.classe.Expense
 import com.example.mony.feature.home.formatCurrency
-import com.example.mony.ui.theme.AmareloDark
-import com.example.mony.ui.theme.AmareloMedio
 import com.example.mony.ui.theme.Gray
-import com.example.mony.ui.theme.GrayLight
 import com.example.mony.ui.theme.GreenLight
 import com.example.mony.ui.theme.RedLight
-import com.example.mony.ui.theme.White
 import java.util.Calendar
 import java.util.Locale
 
