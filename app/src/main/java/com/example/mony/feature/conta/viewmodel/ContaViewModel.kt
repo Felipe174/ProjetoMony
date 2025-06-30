@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 
-class ContaViewModel : ViewModel() {
+open class ContaViewModel : ViewModel() {
 
     private val _userProfile = MutableStateFlow<UserProfile?>(null)
     val userProfile: StateFlow<UserProfile?> = _userProfile
@@ -39,4 +39,9 @@ class ContaViewModel : ViewModel() {
         }
     }
 }
+
+class FakeContaViewModel : ContaViewModel() {
+    // Podes sobrescrever LiveData/StateFlow com valores fixos aqui se necessário
+}
+
 

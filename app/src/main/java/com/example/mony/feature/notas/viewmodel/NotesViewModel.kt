@@ -1,8 +1,10 @@
 package com.example.mony.feature.notas.viewmodel
 
 import android.util.Log
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.mony.feature.conta.viewmodel.ContaViewModel
 import com.example.mony.feature.notas.classe.NotaItem
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
@@ -17,7 +19,7 @@ import kotlinx.coroutines.tasks.await
 open class NotesViewModel : ViewModel() {
 
     private val _notes = MutableStateFlow<List<NotaItem>>(emptyList())
-    val notes: StateFlow<List<NotaItem>> = _notes
+    open val notes: StateFlow<List<NotaItem>> = _notes
 
     private val auth: FirebaseAuth = Firebase.auth
     private val userId: String?
@@ -143,3 +145,30 @@ open class NotesViewModel : ViewModel() {
         }
     }
 }
+
+class FakeNotesViewModel : NotesViewModel() {
+    private val _fakeNotes = MutableStateFlow<List<NotaItem>>(
+        listOf(
+            NotaItem(
+                id = "2",
+                title = "Nota de Teste 2",
+                content = "Descrição da nota 2",
+                timestamp = 1,
+            ),
+            NotaItem(
+                id = "2",
+                title = "Nota de Teste 2",
+                content = "Descrição da nota 2",
+                timestamp = 1,
+            )
+        )
+    )
+
+    override val notes: StateFlow<List<NotaItem>>
+        get() = _fakeNotes
+
+    val userName = mutableStateOf("Teste Preview")
+}
+
+
+

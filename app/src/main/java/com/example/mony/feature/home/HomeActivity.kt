@@ -1,6 +1,7 @@
 package com.example.mony.feature.home
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -42,10 +43,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -64,11 +67,13 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -97,6 +102,7 @@ import com.example.mony.feature.home.classe.ExpenseItem
 import com.example.mony.feature.home.dialog.AddDialog
 import com.example.mony.feature.home.logicaGrafico.HomeWithGraph
 import com.example.mony.feature.home.viewmodel.HomeViewModel
+import com.example.mony.feature.home.viewmodel.fakeHomeViewModel
 import com.example.mony.feature.notas.viewmodel.NotesViewModel
 import com.example.mony.feature.utils.AppState
 import com.example.mony.feature.utils.navegation.MyApp
@@ -108,6 +114,7 @@ import com.example.mony.ui.theme.RedLight
 import com.google.accompanist.pager.HorizontalPagerIndicator
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import kotlinx.coroutines.delay
 import java.text.NumberFormat
 import java.util.Calendar
 import java.util.Locale
@@ -137,9 +144,16 @@ class HomeActivity : ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class,
+    ExperimentalMaterialApi::class
+)
 @Composable
-fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel(), onExpenseClick: (String) -> Unit, navController: NavController) {
+fun HomeScreen(
+    appState: AppState,
+    homeViewModel: HomeViewModel = viewModel(),
+    onExpenseClick: (String) -> Unit,
+    navController: NavController
+) {
     var showAddExpenseDialog by remember { mutableStateOf(false) }
     var selectedFilter by remember { mutableStateOf("Semana") }
     var currentDate by remember { mutableLongStateOf(System.currentTimeMillis()) }
@@ -148,9 +162,22 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel(), o
     var showCheckboxes by remember { mutableStateOf(false) }
     val expenses by homeViewModel.expenses.collectAsState()
     var selectedExpense by remember { mutableStateOf<Expense?>(null) }
-    val filteredExpenses = filterExpensesByPeriod(expenses, currentDate, selectedFilter)
-    val topLevelDestinations = getTopLevelDestinations()
 
+    val filteredExpenses by remember(currentDate, selectedFilter, expenses) {
+        derivedStateOf {
+            filterExpensesByPeriod(expenses, currentDate, selectedFilter)
+        }
+    }
+
+    val totalIncome by remember(filteredExpenses) {
+        derivedStateOf { filteredExpenses.filter { it.type.isIncome }.sumOf { it.amount } }
+    }
+
+    val totalExpense by remember(filteredExpenses) {
+        derivedStateOf { filteredExpenses.filter { !it.type.isIncome }.sumOf { it.amount } }
+    }
+
+    val topLevelDestinations = getTopLevelDestinations()
 
     val imagens = listOf(
         R.drawable.carrosel1,
@@ -158,8 +185,9 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel(), o
     )
 
     LaunchedEffect(Unit) {
+        delay(300)
         if (expenses.isEmpty()) {
-            homeViewModel.loadExpenses()
+            homeViewModel.checkUserAndLoadExpenses()
         }
     }
 
@@ -180,7 +208,7 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel(), o
                     label = {
                         Text(text = stringResource(destination.iconTextId), maxLines = 1)
                     },
-                            onClick = { appState.navigateToTopLevelDestination(destination.route) }
+                    onClick = { appState.navigateToTopLevelDestination(destination.route) }
                 )
             }
         }
@@ -195,7 +223,7 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel(), o
             TopAppBar(
                 title = {},
                 navigationIcon = {
-                    IconButton(onClick = { }) {
+                    IconButton(onClick = { /* TODO: Abrir menu ou pesquisa */ }) {
                         Icon(
                             imageVector = Icons.Filled.Menu,
                             contentDescription = "Pesquisar",
@@ -205,308 +233,291 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel(), o
                 },
                 actions = {
                     if (selectedItems.isNotEmpty()) {
-                        IconButton(onClick = { showDeleteDialog = true }) {
+                        IconButton(onClick = {
+                            Log.d("HomeScreen", "SelectedItems size = ${selectedItems.size}")
+                            selectedItems.forEach { Log.d("HomeScreen", "Item selecionado: ${it.id}") }
+                            showDeleteDialog = true
+                        }) {
                             Icon(imageVector = Icons.Filled.Delete, contentDescription = "Deletar")
                         }
                     }
+
                 },
                 colors = topAppBarColors(containerColor = MaterialTheme.colorScheme.onPrimary)
             )
 
+            val isRefreshing by remember { derivedStateOf { expenses.isEmpty() } }
+            val swipeRefreshState = rememberSwipeRefreshState(isRefreshing)
 
-                val swipeState = rememberSwipeRefreshState(isRefreshing = expenses.isEmpty())
-                SwipeRefresh(
-                    state = swipeState,
-                    onRefresh = { homeViewModel.loadExpenses() } // Função que vai carregar as despesas
+            SwipeRefresh(
+                state = swipeRefreshState,
+                onRefresh = { homeViewModel.loadExpenses() }
+            ) {
+
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.background),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    item {
+                        // Card Carrossel
+                        Card(
+                            colors = CardDefaults.cardColors(MaterialTheme.colorScheme.background),
+                            modifier = Modifier
+                                .padding(bottom = 20.dp, top = 10.dp)
+                                .width(330.dp)
+                                .height(200.dp)
+                                .border(
+                                    width = 2.dp,
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    shape = RoundedCornerShape(12.dp)
+                                ),
+                            elevation = CardDefaults.cardElevation(2.dp),
+                        ) {
+                            val pagerState = rememberPagerState(pageCount = { imagens.size })
 
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.background),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        item{
-                            //Card Carrosel
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(RoundedCornerShape(12.dp))
+                            ) {
+                                HorizontalPager(
+                                    state = pagerState,
+                                    modifier = Modifier.fillMaxSize()
+                                ) { page ->
+                                    Image(
+                                        painter = painterResource(id = imagens[page]),
+                                        contentDescription = null,
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .clickable {
+                                                when (page) {
+                                                    0 -> navController.navigate("updates_page")
+                                                    1 -> navController.navigate("comparison_page")
+                                                    2 -> navController.navigate("tip_page")
+                                                }
+                                            }
+                                    )
+                                }
+
+                                HorizontalPagerIndicator(
+                                    pagerState = pagerState,
+                                    pageCount = imagens.size,
+                                    activeColor = Color.Black,
+                                    inactiveColor = Color.LightGray,
+                                    modifier = Modifier
+                                        .align(Alignment.BottomCenter)
+                                        .padding(8.dp)
+                                )
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(90.dp)
+                                .padding(start = 30.dp, end = 15.dp),
+                        ) {
+                            // Card Renda
                             Card(
                                 colors = CardDefaults.cardColors(MaterialTheme.colorScheme.background),
                                 modifier = Modifier
-                                    .padding(bottom = 20.dp, top = 10.dp)
-                                    .width(330.dp)
-                                    .height(200.dp)
+                                    .width(150.dp)
+                                    .fillMaxHeight()
+                                    .align(Alignment.CenterVertically)
                                     .border(
                                         width = 2.dp,
                                         color = MaterialTheme.colorScheme.secondary,
                                         shape = RoundedCornerShape(12.dp)
                                     ),
-                                elevation = CardDefaults.cardElevation(2.dp),
-
-                                ) {
-                                val pagerState = rememberPagerState(pageCount = { imagens.size })
-
-                                Box(
-                                    modifier = Modifier
+                                elevation = CardDefaults.cardElevation(2.dp)
+                            ) {
+                                Column(
+                                    Modifier
                                         .fillMaxSize()
-                                        .clip(RoundedCornerShape(12.dp))
+                                        .padding(3.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
-                                    HorizontalPager(
-                                        state = pagerState,
-                                        modifier = Modifier.fillMaxSize()
-                                    ) { page ->
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(30.dp)
+                                    ) {
+                                        Spacer(modifier = Modifier.width(30.dp))
                                         Image(
-                                            painter = painterResource(id = imagens[page]),
-                                            contentDescription = null,
+                                            painter = painterResource(id = R.drawable.expense),
+                                            contentDescription = "Expense",
                                             modifier = Modifier
-                                                .fillMaxSize()
-                                                .clickable {
-                                                    when (page) {
-                                                        0 -> navController.navigate("updates_page")
-                                                        1 -> navController.navigate("comparison_page")
-                                                        2 -> navController.navigate("tip_page") // Defina essa página
-                                                    }
-                                                }
+                                                .size(15.dp)
+                                                .align(Alignment.Bottom)
+                                        )
+                                        Spacer(modifier = Modifier.width(5.dp))
+                                        Text(
+                                            "Renda",
+                                            fontSize = 15.sp,
+                                            color = MaterialTheme.colorScheme.secondary,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.padding(top = 10.dp)
                                         )
                                     }
-
-                                    // Indicador de página
-                                    HorizontalPagerIndicator(
-                                        pagerState = pagerState,
-                                        pageCount = imagens.size,
-                                        activeColor = Color.Black,
-                                        inactiveColor = Color.LightGray,
-                                        modifier = Modifier
-                                            .align(Alignment.BottomCenter)
-                                            .padding(8.dp)
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        formatCurrency(totalIncome),
+                                        fontSize = 24.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = GreenLight,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.padding(5.dp),
+                                        maxLines = 1
                                     )
                                 }
                             }
-                            Row(
+
+                            Spacer(modifier = Modifier.width(35.dp))
+
+                            // Card Gasto
+                            Card(
+                                colors = CardDefaults.cardColors(MaterialTheme.colorScheme.background),
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(90.dp)
-                                    .padding(start = 30.dp, end = 15.dp),
+                                    .width(150.dp)
+                                    .fillMaxHeight()
+                                    .padding(end = 5.dp)
+                                    .align(Alignment.CenterVertically)
+                                    .border(
+                                        width = 2.dp,
+                                        color = MaterialTheme.colorScheme.secondary,
+                                        shape = RoundedCornerShape(12.dp)
+                                    ),
+                                elevation = CardDefaults.cardElevation(2.dp)
                             ) {
-                                //Cards
-                                Card(
-                                    colors = CardDefaults.cardColors(MaterialTheme.colorScheme.background),
-                                    modifier = Modifier
-                                        .width(150.dp)
-                                        .fillMaxHeight()
-                                        .align(Alignment.CenterVertically)
-                                        .border(
-                                            width = 2.dp, // Espessura do contorno
-                                            color = MaterialTheme.colorScheme.secondary, // Cor do contorno
-                                            shape = RoundedCornerShape(12.dp) // Forma do contorno (arredondada aqui)
-                                        ),
-                                    elevation = CardDefaults.cardElevation(2.dp)
-
+                                Column(
+                                    Modifier
+                                        .fillMaxSize()
+                                        .padding(3.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
                                 ) {
-
-
-                                    Column(Modifier.fillMaxSize().padding(3.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Row(
-                                            modifier=Modifier
-                                                .fillMaxWidth()
-                                                .height(30.dp)
-                                        ){
-
-                                            Spacer(modifier = Modifier
-                                                .width(30.dp)
-                                                .padding(top = 5.dp))
-
-                                            Image(
-                                                painter = painterResource(id = R.drawable.expense),
-                                                contentDescription = "Expense",
-                                                modifier = Modifier
-                                                    .size(15.dp)
-                                                    .align(Alignment.Bottom),
-
-                                                )
-
-                                            Spacer(modifier = Modifier.width(5.dp))
-
-                                            Text(
-                                                "Renda",
-                                                fontSize = 15.sp,
-                                                color = MaterialTheme.colorScheme.secondary,
-                                                fontWeight = FontWeight.Bold,
-                                                modifier=Modifier.padding(top=10.dp)
-                                            )
-                                        }
-                                        Spacer(modifier = Modifier.height(8.dp))
-
-                                        Text(
-                                            formatCurrency(expenses.filter { it.type.isIncome }.sumOf { it.amount }),
-                                            fontSize = 24.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            color = GreenLight,
-                                            textAlign = TextAlign.Center,
-                                            modifier = Modifier.padding(5.dp),
-                                            maxLines = 1
-
-                                        )
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.width(35.dp))
-
-                                Card(
-                                    colors = CardDefaults.cardColors(MaterialTheme.colorScheme.background),
-                                    modifier = Modifier
-                                        .width(150.dp)
-                                        .fillMaxHeight()
-                                        .padding(end = 5.dp)
-                                        .align(Alignment.CenterVertically)
-                                        .border(
-                                            width = 2.dp, // Espessura do contorno
-                                            color = MaterialTheme.colorScheme.secondary, // Cor do contorno
-                                            shape = RoundedCornerShape(12.dp) // Forma do contorno (arredondada aqui)
-                                        ),
-                                    elevation = CardDefaults.cardElevation(2.dp)
-                                ) {
-
-                                    Column(
-                                        Modifier.fillMaxSize().padding(3.dp),
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(30.dp)
                                     ) {
-
-                                        remember(filteredExpenses) {
-                                            filteredExpenses.filter { it.type.isIncome }.sumOf { it.amount }
-                                        }
-                                        remember(filteredExpenses) {
-                                            filteredExpenses.filter { !it.type.isIncome }.sumOf { it.amount }
-                                        }
-
-                                        Row(
-                                            modifier=Modifier
-                                                .fillMaxWidth()
-                                                .height(30.dp)
-                                        ){
-
-                                            Spacer(modifier = Modifier
-                                                .width(30.dp)
-                                                .padding(top = 5.dp))
-
-                                            Image(
-                                                painter = painterResource(id = R.drawable.income),
-                                                contentDescription = "Expense",
-                                                modifier = Modifier
-                                                    .size(15.dp)
-                                                    .size(15.dp)
-                                                    .align(Alignment.Bottom)
-                                            )
-
-                                            Spacer(modifier = Modifier.width(5.dp))
-
-                                            Text(
-                                                "Gasto",
-                                                fontSize = 15.sp,
-                                                color = MaterialTheme.colorScheme.secondary,
-                                                fontWeight = FontWeight.Bold,
-                                                modifier = Modifier.padding(top = 10.dp)
-                                            )
-                                        }
-                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Spacer(modifier = Modifier.width(30.dp))
+                                        Image(
+                                            painter = painterResource(id = R.drawable.income),
+                                            contentDescription = "Expense",
+                                            modifier = Modifier
+                                                .size(15.dp)
+                                                .align(Alignment.Bottom)
+                                        )
+                                        Spacer(modifier = Modifier.width(5.dp))
                                         Text(
-                                            formatCurrency(expenses.filter { !it.type.isIncome }
-                                                .sumOf { it.amount }),
-                                            fontSize = 24.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            color = RedLight,
-                                            modifier = Modifier.padding(5.dp),
-                                            maxLines = 1
+                                            "Gasto",
+                                            fontSize = 15.sp,
+                                            color = MaterialTheme.colorScheme.secondary,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.padding(top = 10.dp)
                                         )
                                     }
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        formatCurrency(totalExpense),
+                                        fontSize = 24.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = RedLight,
+                                        modifier = Modifier.padding(5.dp),
+                                        maxLines = 1
+                                    )
                                 }
-                                Spacer(modifier = Modifier.weight(1f))
                             }
-
-
+                            Spacer(modifier = Modifier.weight(1f))
                         }
+                    }
 
+                    item {
+                        Spacer(modifier = Modifier.height(7.dp))
+                        HomeWithGraph(
+                            selectedFilter = selectedFilter,
+                            currentDate = currentDate,
+                            expenses = expenses,
+                            onDateChange = { newDate -> currentDate = newDate },
+                            onFilterChange = { newFilter -> selectedFilter = newFilter }
+                        )
+                    }
 
-                        item {
-                            Spacer(modifier = Modifier.height(7.dp))
-                            HomeWithGraph(
-                                selectedFilter = selectedFilter,
-                                currentDate = currentDate,
-                                expenses = expenses,
-                                onDateChange = { newDate -> currentDate = newDate },
-                                onFilterChange = { newFilter -> selectedFilter = newFilter }
+                    items(filteredExpenses, key = { it.id }) { expense ->
+                        val isSelected = selectedItems.any { it.id == expense.id }
+                        val alpha by animateFloatAsState(if (isSelected) 0.5f else 1f)
+
+                        Box(
+                            modifier = Modifier
+                                .graphicsLayer(alpha = alpha)
+                                .combinedClickable(
+                                    onClick = {
+                                        Log.d("CLICK", "Item clicado: ${expense.id}")
+                                        if (showCheckboxes) {
+                                            if (isSelected) {
+                                                selectedItems.removeAll { it.id == expense.id }
+                                            } else {
+                                                selectedItems.any { it.id == expense.id }
+
+                                            }
+
+                                        } else {
+                                            onExpenseClick(expense.id)
+                                        }
+                                    },
+                                    onLongClick = {
+                                        if (!showCheckboxes) {
+                                            showCheckboxes = true
+                                        }
+                                        if (!selectedItems.any { it.id == expense.id }) {
+                                            selectedItems.add(expense)
+                                        }
+                                        Log.d("HomeScreen", "Clique longo em: ${expense.id}")
+                                    }
+                                )
+
+                        ) {
+                            ExpenseItem(
+                                expense = expense,
+                                isSelected = isSelected,
                             )
                         }
-
-                        items(filteredExpenses, key = { it.id }) { expense ->
-                            val isSelected = selectedItems.contains(expense)
-                            val alpha by animateFloatAsState(if (isSelected) 0.5f else 1f)
-
-                                Box(
-                                    modifier = Modifier
-                                        .graphicsLayer(alpha = alpha)
-                                        .combinedClickable(
-                                            onClick = {
-                                                if (showCheckboxes) {
-                                                    // Modo seleção: alternar seleção
-                                                    if (isSelected) selectedItems.remove(expense)
-                                                    else selectedItems.add(expense)
-                                                } else {
-                                                    // Modo normal: abrir detalhes
-                                                    onExpenseClick(expense.id)
-                                                }
-                                            },
-                                            onLongClick = {
-                                                if (!showCheckboxes) {
-                                                    showCheckboxes = true
-                                                }
-                                                // Adiciona mesmo se já estiver no modo
-                                                if (!selectedItems.contains(expense)) {
-                                                    selectedItems.add(expense)
-                                                }
-                                            }
-                                        )
-                                ) {
-                                    ExpenseItem(
-                                        expense = expense,
-                                        isSelected = isSelected,
-
-                                        )
-                                }
-                            }
-                        }
                     }
-
-
-                    AnimatedVisibility(
-                        visible = true,
-                        enter = fadeIn() + slideInVertically(),
-                        exit = fadeOut() + slideOutVertically()
-                    ) {
                 }
+            }
 
-                selectedExpense?.let { expense ->
-                    ExpenseDetailScreen(
-                        expenseId = expense.id,
-                        onBack = { selectedExpense = null },
-                    )
-                }
+            AnimatedVisibility(
+                visible = true,
+                enter = fadeIn() + slideInVertically(),
+                exit = fadeOut() + slideOutVertically()
+            ) {
+                // Seu conteúdo animado (se houver)
+            }
 
-                AddDialog(
-                    showDialog = showAddExpenseDialog,
-                    onDismiss = { showAddExpenseDialog = false },
-                    onAdd = { amount, type, date ->
-
-                        val newExpense = Expense(
-                            id = "",
-                            amount = amount,
-                            date = date,
-                            type = type,
-                            description = ""
-                        )
-                        homeViewModel.addExpense(newExpense)
-                        showAddExpenseDialog = false
-                    }
+            selectedExpense?.let { expense ->
+                ExpenseDetailScreen(
+                    expenseId = expense.id,
+                    onBack = { selectedExpense = null },
                 )
+            }
+
+            AddDialog(
+                showDialog = showAddExpenseDialog,
+                onDismiss = { showAddExpenseDialog = false },
+                onAdd = { amount, type, date ->
+                    val newExpense = Expense(
+                        id = "",
+                        amount = amount,
+                        date = date,
+                        type = type,
+                        description = ""
+                    )
+                    homeViewModel.addExpense(newExpense)
+                    showAddExpenseDialog = false
+                }
+            )
         }
 
         if (showCheckboxes) {
@@ -523,6 +534,7 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel(), o
                     }
             )
         }
+
         Column(
             Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Bottom,
@@ -541,28 +553,42 @@ fun HomeScreen(appState: AppState, homeViewModel: HomeViewModel = viewModel(), o
 
             BtnAdicionar(
                 onClick = { showAddExpenseDialog = true },
-                modifier = Modifier.offset(y = floatAnimation.dp)
             )
         }
     }
-
 
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             title = { Text("Confirmar Exclusão") },
-            text = { Text("Deseja excluir os itens selecionados?") },
+            text = {
+                Text("Deseja realmente excluir ${selectedItems.size} item(ns) selecionado(s)?")
+            },
             confirmButton = {
                 TextButton(onClick = {
-                    selectedItems.forEach { homeViewModel.deleteExpense(it.id) }
-                    selectedItems.clear()
+                    Log.d("HomeScreen", "Confirmou exclusão de ${selectedItems.size} itens")
+                    if (selectedItems.isNotEmpty()) {
+                        selectedItems.forEach {
+                            Log.d("HomeScreen", "Deletando id: ${it.id}")
+                            homeViewModel.deleteExpense(it.id)
+                        }
+                        selectedItems.clear()
+                    }
                     showDeleteDialog = false
-                }) { Text("Sim") }
+                }) {
+                    Text("Sim", color = MaterialTheme.colorScheme.error)
+                }
             },
-            dismissButton = { TextButton(onClick = { showDeleteDialog = false }) { Text("Não") } }
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Não")
+                }
+            }
         )
     }
 }
+
+
 
 
 @Composable
@@ -678,9 +704,15 @@ fun formatCurrency(amount: Double): String {
 fun HomeScreenPreview() {
     // Usando um NavController simples
     val navController = rememberNavController()
+    // Criando uma instância do HomeViewModel
+    val fakeViewModel = remember { fakeHomeViewModel() }
     // Criando uma instância do AppState
     AppState(navController)
+
     MonyTheme(darkTheme = false) {
-    HomeScreen(appState = AppState(navController = rememberNavController()), homeViewModel = HomeViewModel(),onExpenseClick={},navController = navController)
+    HomeScreen(appState = AppState(navController = rememberNavController())
+            ,homeViewModel = fakeViewModel
+            ,onExpenseClick={},
+            navController = navController)
 }
     }

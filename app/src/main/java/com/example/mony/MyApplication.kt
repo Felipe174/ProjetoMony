@@ -1,7 +1,7 @@
-package com.example.mony;
+package com.example.mony
 
-import android.app.Application;
-import com.google.firebase.FirebaseApp;
+import android.app.Application
+import com.google.firebase.FirebaseApp
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
 

@@ -151,7 +151,7 @@ fun MyApp(
         // Outras telas
         composable("mais") { ContaScreen(appState, navController, contaViewModel) }
         composable("info") { InfoScreen(navController, contaViewModel, googleSignInClient ) }
-        composable("secure") { SecureScreen(navController) }
+        composable("secure") { SecureScreen() }
         composable("help") { HelpScreen(navController) }
         composable("about") { AboutScreen(navController) }
     }

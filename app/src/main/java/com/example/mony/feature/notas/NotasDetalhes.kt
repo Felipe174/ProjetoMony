@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.mony.feature.notas.classe.NotaItem
+import com.example.mony.feature.notas.viewmodel.FakeNotesViewModel
 import com.example.mony.feature.notas.viewmodel.NotesViewModel
 import com.example.mony.ui.theme.MonyTheme
 
@@ -76,7 +77,7 @@ fun NotaDetalhes(
                 title = { Text("Detalhes da Nota", modifier = Modifier.padding(start = 12.dp)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Voltar")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(MaterialTheme.colorScheme.onPrimary)
@@ -152,12 +153,12 @@ fun getCurrentDateTime(): String {
 @Composable
 fun NotaDetalhesPreview() {
     val navController = rememberNavController()
-    val notesViewModel = NotesViewModel()
+    val fakeViewModel = remember { FakeNotesViewModel() }
 
     MonyTheme {
     NotaDetalhes(
         navController = navController,
-        notesViewModel = notesViewModel,
+        notesViewModel = fakeViewModel,
         noteId = "1",
     )
 }}

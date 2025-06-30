@@ -7,7 +7,6 @@ import java.time.YearMonth
 import java.time.ZoneId
 import java.util.Calendar
 
-
 fun getChartData(
     expenses: List<Expense>,
     currentDate: Long,
@@ -20,9 +19,9 @@ fun getChartData(
 
     return when (filter) {
         "Semana" -> handleWeek(calendar, expenses)
-        "Mês"    -> handleMonth(calendar, expenses)
-        "Ano"    -> handleYear(calendar, expenses)
-        else     -> emptyList()
+        "Mês" -> handleMonth(calendar, expenses)
+        "Ano" -> handleYear(calendar, expenses)
+        else -> emptyList()
     }
 }
 
@@ -49,56 +48,48 @@ private fun handleMonth(calendar: Calendar, expenses: List<Expense>): List<Pair<
         setToDayEnd()
     }
 
-    val labels = listOf("SEMANA 1", "SEMANA 2", "SEMANA 3", "SEMANA 4", "SEMANA 5")
-    val sums = labels.associateWith { 0.0 }.toMutableMap()
-
+    // 5 semanas possíveis
+    val weeks = MutableList(5) { Pair(0.0, 0.0) }
     var current = firstDay.cloneAsSafe()
 
     while (current.timeInMillis <= lastDay.timeInMillis) {
         val idx = ((current.get(Calendar.DAY_OF_MONTH) - 1) / 7).coerceAtMost(4)
-        val label = labels[idx]
-
         val start = current.cloneAsSafe().apply { setToDayStart() }.timeInMillis
         val end = current.cloneAsSafe().apply { setToDayEnd() }.timeInMillis
 
         val (inc, exp) = calculateDailyValues(expenses, start, end)
-        sums[label] = (sums[label] ?: 0.0) + inc - exp
+        val (oldInc, oldExp) = weeks[idx]
+        weeks[idx] = Pair(oldInc + inc, oldExp + exp)
 
         current.add(Calendar.DAY_OF_YEAR, 1)
     }
 
-    return labels.map { label -> Pair(sums[label] ?: 0.0, 0.0) }
+    return weeks
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 private fun handleYear(calendar: Calendar, expenses: List<Expense>): List<Pair<Double, Double>> {
     val year = calendar.get(Calendar.YEAR)
-    val months = listOf("JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ")
-    val sums = months.associateWith { 0.0 }.toMutableMap()
 
-    months.forEachIndexed { index, label ->
-        val ym = YearMonth.of(year, index + 1)
-        val zone = ZoneId.systemDefault()
+    return (0..11).map { monthIndex ->
+        val start = calendar.cloneAsSafe().apply {
+            set(Calendar.YEAR, year)
+            set(Calendar.MONTH, monthIndex)
+            set(Calendar.DAY_OF_MONTH, 1)
+            setToDayStart()
+        }.timeInMillis
 
-        val start = ym.atDay(1).atStartOfDay(zone)
-        val end = ym.atEndOfMonth().atTime(23, 59, 59, 999_000_000).atZone(zone)
+        val end = calendar.cloneAsSafe().apply {
+            set(Calendar.YEAR, year)
+            set(Calendar.MONTH, monthIndex)
+            set(Calendar.DAY_OF_MONTH, getActualMaximum(Calendar.DAY_OF_MONTH))
+            setToDayEnd()
+        }.timeInMillis
 
-        var current = start
-        while (current.isBefore(end)) {
-            val (inc, exp) = calculateDailyValues(
-                expenses,
-                current.toInstant().toEpochMilli(),
-                current.plusDays(1).minusNanos(1).toInstant().toEpochMilli()
-            )
-            sums[label] = (sums[label] ?: 0.0) + inc - exp
-            current = current.plusDays(1)
-        }
+        calculateDailyValues(expenses, start, end)
     }
-
-    return months.map { label -> Pair(sums[label] ?: 0.0, 0.0) }
 }
 
-// --------------------- Funções auxiliares ---------------------
+
 
 private fun calculateDailyValues(
     expenses: List<Expense>,
@@ -106,13 +97,13 @@ private fun calculateDailyValues(
     end: Long
 ): Pair<Double, Double> {
     val filtered = expenses.filter { it.date in start..end }
-    return Pair(
-        filtered.filter { it.type.isIncome }.sumOf { it.amount },
-        filtered.filter { !it.type.isIncome }.sumOf { it.amount }
-    )
+    val gain = filtered.filter { it.type.isIncome }.sumOf { it.amount ?: 0.0 }
+    val loss = filtered.filter { !it.type.isIncome }.sumOf { it.amount ?: 0.0 }
+
+    return Pair(gain, loss)
 }
 
-private fun Calendar.cloneAsSafe(): Calendar = this.clone() as Calendar
+private fun Calendar.cloneAsSafe(): Calendar = (this.clone() as Calendar)
 
 private fun Calendar.setToDayStart() {
     set(Calendar.HOUR_OF_DAY, 0)

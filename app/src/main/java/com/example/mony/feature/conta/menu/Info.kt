@@ -18,7 +18,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -102,13 +101,9 @@ fun InfoScreen(
             .padding(padding)
         ) {
             // 1) Loading
-            if (userProfile == null) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                return@Box
-            }
 
             // 2) Conteúdo quando profile estiver disponível
-            val profile = userProfile!!
+            val profile = userProfile
 
             Column(
                 modifier = Modifier

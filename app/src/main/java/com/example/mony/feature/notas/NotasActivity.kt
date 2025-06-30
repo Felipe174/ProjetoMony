@@ -1,5 +1,6 @@
 package com.example.mony.feature.notas
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -25,8 +26,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
@@ -69,6 +70,7 @@ import com.example.mony.R
 import com.example.mony.feature.conta.viewmodel.ContaViewModel
 import com.example.mony.feature.home.viewmodel.HomeViewModel
 import com.example.mony.feature.notas.classe.NotaItem
+import com.example.mony.feature.notas.viewmodel.FakeNotesViewModel
 import com.example.mony.feature.notas.viewmodel.NotesViewModel
 import com.example.mony.feature.utils.AppState
 import com.example.mony.feature.utils.navegation.MyApp
@@ -370,7 +372,7 @@ fun NoteEditor(
             title = { Text("Nova Nota", color = MaterialTheme.colorScheme.onSecondary) },
             navigationIcon = {
                 IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Voltar")
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
                 }
             },
             colors = topAppBarColors(containerColor = MaterialTheme.colorScheme.onPrimary)
@@ -425,36 +427,17 @@ fun NoteEditor(
 @Composable
 fun NotasScreenPreview() {
     val navController = rememberNavController()
+
     val appState = AppState(navController)
+
+    val fakeViewModel = remember { FakeNotesViewModel() }
 
     MonyTheme(darkTheme = false) {
     NotasScreen(
         navController = navController,
         appState = appState,
-        notesViewModel = NotesViewModel()
+        notesViewModel = fakeViewModel
+
     )
 }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun NoteEditorPreview() {
-    val navController = rememberNavController()
-    AppState(navController)
-    MonyTheme(darkTheme = false) {
-    NoteEditor(
-        navController = navController,
-        notesViewModel = NotesViewModel()
-    )
-}}
-
-@Preview(showBackground = true)
-@Composable
-fun DrawerMenuPreview() {
-    MonyTheme(darkTheme = false) {
-        DrawerMenu(
-            onMenuItemClick = { },
-            navController = rememberNavController()
-        )
-    }
 }

@@ -50,12 +50,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.example.mony.R
 import com.example.mony.feature.conta.classe.UserProfile
 import com.example.mony.feature.conta.viewmodel.ContaViewModel
+import com.example.mony.feature.conta.viewmodel.FakeContaViewModel
 import com.example.mony.feature.home.viewmodel.HomeViewModel
 import com.example.mony.feature.login.LoginActivity
 import com.example.mony.feature.notas.viewmodel.NotesViewModel
@@ -369,19 +371,16 @@ fun MenuItem(
 @Preview(showBackground = true)
 @Composable
 fun ContaScreenPreview() {
-    // Usando um NavController simples
     val navController = rememberNavController()
-
-    // Criando um ViewModel fictício (evitar usar ViewModels reais no preview)
-    val contaViewModel = ContaViewModel()
-
-    // Criando um AppState fictício
+    val fakeViewModel = remember { FakeContaViewModel() }
     val appState = remember { AppState(navController) }
-MonyTheme(darkTheme = false) {
-    ContaScreen(
-        appState = appState,
-        navController = navController,
-        contaViewModel = contaViewModel
-    )
 
-}}
+    MonyTheme(darkTheme = false) {
+        ContaScreen(
+            appState = appState,
+            navController = navController,
+            contaViewModel = fakeViewModel
+        )
+    }
+}
+

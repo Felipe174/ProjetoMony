@@ -66,7 +66,7 @@ fun AboutScreen(navController: NavController) {
             ) {
 
                 item {
-                    SobreText(navController) // Chamando o conteúdo da tela
+                    SobreText() // Chamando o conteúdo da tela
                 }
 
                 // Itens adicionais (como o MenuItemSobre)
@@ -133,12 +133,12 @@ fun AboutScreen(navController: NavController) {
 }
 
 @Composable
-fun SobreText(navController: NavController) {
+fun SobreText() {
     // Definindo o conteúdo da seção "Sobre Nós"
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top=10.dp, start=10.dp, end=10.dp, bottom = 15.dp),
+            .padding(top = 10.dp, start = 10.dp, end = 10.dp, bottom = 15.dp),
         colors = CardDefaults.cardColors(MaterialTheme.colorScheme.background)
     ) {
         Column(

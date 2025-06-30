@@ -35,7 +35,7 @@ android {
         buildTypes {
             getByName("release") {
                 signingConfig = signingConfigs.getByName("release")
-                isMinifyEnabled = false
+                isMinifyEnabled = true
                 proguardFiles(
                     getDefaultProguardFile("proguard-android-optimize.txt"),
                     "proguard-rules.pro"
@@ -63,7 +63,6 @@ android {
         }
     }
 }
-
 
 dependencies {
     // Firebase
@@ -138,7 +137,7 @@ dependencies {
     implementation(libs.generativeai)
     implementation (libs.accompanist.pager)
     implementation (libs.accompanist.pager.indicators)
-    implementation ("com.google.accompanist:accompanist-swiperefresh:0.36.0")
+    implementation(libs.accompanist.swiperefresh)
 
 
 
