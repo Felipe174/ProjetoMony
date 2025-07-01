@@ -73,7 +73,7 @@ fun MyApp(
                 appState,
                 homeViewModel= homeViewModel,
                 onExpenseClick = { expenseId ->
-                    navController.navigate("expenseDetail/$expenseId")
+                    navController.navigate("expenseDetail/${it.id}")
                 },
                 navController
             )

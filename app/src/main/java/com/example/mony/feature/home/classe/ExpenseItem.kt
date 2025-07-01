@@ -7,6 +7,8 @@ import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -42,15 +44,18 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+
 @Composable
 fun ExpenseItem(
     expense: Expense,
     isSelected: Boolean,
+    onTap: (Expense) -> Unit,
+    onLongPress: (Expense) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val animatedProgress by animateFloatAsState(
         targetValue = if (isSelected) 1.05f else 1f,
-        animationSpec = tween(200)
+        animationSpec = tween(200), label = "scaleAnim"
     )
 
     ElevatedCard(
@@ -58,7 +63,11 @@ fun ExpenseItem(
             .fillMaxWidth()
             .padding(vertical = 4.dp)
             .scale(animatedProgress)
-            .pointerInput(Unit) {
+            .pointerInput(expense.id) {
+                detectTapGestures(
+                    onTap = { onTap(expense) },
+                    onLongPress = { onLongPress(expense) }
+                )
             },
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.background,
@@ -79,7 +88,7 @@ fun ExpenseItem(
             ) {
                 Checkbox(
                     checked = isSelected,
-                    onCheckedChange = null, // 👈 Desabilita interação direta
+                    onCheckedChange = null,
                     modifier = Modifier.padding(end = 8.dp),
                     colors = CheckboxDefaults.colors(
                         checkedColor = MaterialTheme.colorScheme.primary,
@@ -154,5 +163,5 @@ fun ExpenseItemPreview() {
     )
 
     // Exibir o ExpenseItem
-    ExpenseItem(expense = exampleExpense, isSelected = false) // Passa o objeto Expense
+    ExpenseItem(expense = exampleExpense, isSelected = false, onTap = {}, onLongPress = {}) // Passa o objeto Expense
 }

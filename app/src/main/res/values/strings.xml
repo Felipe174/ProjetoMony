@@ -1,22 +1,15 @@
 <resources>
     <string name="app_name">Mony</string>
     <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
 
     <string name="default_web_client_id">283317962952-b4fonuhui4mfor1191jrpf7s7msd5d43.apps.googleusercontent.com</string>
-    <string name="title_activity_main">MainActivity</string>
-    <string name="title_activity_conta_activityy">ContaActivityy</string>
 
     <!--Menu-->
     <string name="Home">Home</string>
-    <string name="Calendario">Calendario</string>
     <string name="Notas">Notas</string>
     <string name="More">More</string>
 
     <!--NotasScreen-->
-    <string name="notas">Notas</string>
-    <string name="arquivos">Arquivos</string>
-    <string name="configuracoes">Configurações</string>
 
     <!-- Tipos de Transação -->
     <string name="type_income">Receita</string>
@@ -26,7 +19,6 @@
     <string name="type_salary">Salário</string>
     <string name="type_entertainment">Lazer</string>
     <string name="type_bills">Contas</string>
-    <string name="type_other">Outros</string>
 
 </resources>
 

@@ -162,6 +162,7 @@ fun HomeScreen(
     var showCheckboxes by remember { mutableStateOf(false) }
     val expenses by homeViewModel.expenses.collectAsState()
     var selectedExpense by remember { mutableStateOf<Expense?>(null) }
+    var isDeleting by remember { mutableStateOf(false) }
 
     val filteredExpenses by remember(currentDate, selectedFilter, expenses) {
         derivedStateOf {
@@ -235,7 +236,12 @@ fun HomeScreen(
                     if (selectedItems.isNotEmpty()) {
                         IconButton(onClick = {
                             Log.d("HomeScreen", "SelectedItems size = ${selectedItems.size}")
-                            selectedItems.forEach { Log.d("HomeScreen", "Item selecionado: ${it.id}") }
+                            selectedItems.forEach {
+                                Log.d(
+                                    "HomeScreen",
+                                    "Item selecionado: ${it.id}"
+                                )
+                            }
                             showDeleteDialog = true
                         }) {
                             Icon(imageVector = Icons.Filled.Delete, contentDescription = "Deletar")
@@ -474,15 +480,33 @@ fun HomeScreen(
                                         if (!selectedItems.any { it.id == expense.id }) {
                                             selectedItems.add(expense)
                                         }
-                                        Log.d("HomeScreen", "Clique longo em: ${expense.id}")
                                     }
                                 )
 
                         ) {
                             ExpenseItem(
                                 expense = expense,
-                                isSelected = isSelected,
+                                isSelected = selectedItems.contains(expense),
+                                onTap = {
+                                    if (selectedItems.isNotEmpty()) {
+                                        if (selectedItems.contains(it)) {
+                                            selectedItems.remove(it)
+                                        } else {
+                                            selectedItems.add(it)
+                                        }
+                                    } else {
+                                        navController.navigate("expenseDetail/${it.id}") // 👈 abre detalhes
+                                    }
+                                },
+                                        onLongPress = {
+                                    if (selectedItems.contains(it)) {
+                                        selectedItems.remove(it)
+                                    } else {
+                                        selectedItems.add(it)
+                                    }
+                                }
                             )
+
                         }
                     }
                 }
@@ -565,23 +589,26 @@ fun HomeScreen(
                 Text("Deseja realmente excluir ${selectedItems.size} item(ns) selecionado(s)?")
             },
             confirmButton = {
-                TextButton(onClick = {
-                    Log.d("HomeScreen", "Confirmou exclusão de ${selectedItems.size} itens")
-                    if (selectedItems.isNotEmpty()) {
-                        selectedItems.forEach {
-                            Log.d("HomeScreen", "Deletando id: ${it.id}")
-                            homeViewModel.deleteExpense(it.id)
+                TextButton(
+                    onClick = {
+                        if (selectedItems.isNotEmpty() && !isDeleting) {
+                            isDeleting = true
+                            selectedItems.forEach {
+                                homeViewModel.deleteExpense(it.id)
+                            }
+                            selectedItems.clear()
+                            showDeleteDialog = false
+                            isDeleting = false
                         }
-                        selectedItems.clear()
-                    }
-                    showDeleteDialog = false
-                }) {
-                    Text("Sim", color = MaterialTheme.colorScheme.error)
+                    },
+                    enabled = !isDeleting
+                ) {
+                    Text("Excluir", color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Não")
+                    Text("Cancelar")
                 }
             }
         )
@@ -591,7 +618,7 @@ fun HomeScreen(
 
 
 
-@Composable
+    @Composable
 fun BtnAdicionar(onClick: () -> Unit, modifier: Modifier = Modifier) {
 
     FloatingActionButton(

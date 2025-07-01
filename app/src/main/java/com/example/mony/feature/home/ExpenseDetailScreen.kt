@@ -1,9 +1,15 @@
 package com.example.mony.feature.home
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -15,6 +21,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -30,6 +37,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,6 +47,7 @@ fun ExpenseDetailScreen(
     homeViewModel: HomeViewModel = viewModel()
 ) {
     val expense by homeViewModel.getExpense(expenseId).collectAsState(initial = null)
+    val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
 
     Scaffold(
         topBar = {
@@ -46,7 +55,7 @@ fun ExpenseDetailScreen(
                 title = { Text("Detalhes da Transação") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Voltar")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
                     }
                 }
             )
@@ -57,18 +66,30 @@ fun ExpenseDetailScreen(
                 .padding(padding)
                 .padding(16.dp)
         ) {
-            when {
-                expense == null ->
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+            if (expense == null) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+            } else {
+                val e = expense!!
 
-                else -> {
-                    TransactionDetailItem("Tipo", stringResource(expense!!.type.labelRes))
-                    TransactionDetailItem("Valor", if(expense!!.type.isIncome) "+ € ${"%.2f".format(expense!!.amount)}" else "- € ${"%.2f".format(expense!!.amount)}")
-                    TransactionDetailItem(
-                        "Data",
-                        SimpleDateFormat("dd/MM/yyyy").format(Date(expense!!.date))
-                    )
-                    TransactionDetailItem("Descrição", expense!!.description)
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = CardDefaults.cardElevation(1.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        TransactionDetailItem("Tipo", stringResource(e.type.labelRes))
+                        Spacer(Modifier.height(8.dp))
+                        TransactionDetailItem(
+                            "Valor",
+                            if (e.type.isIncome) "+ € ${"%.2f".format(e.amount)}"
+                            else "- € ${"%.2f".format(e.amount)}"
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        TransactionDetailItem("Data", dateFormatter.format(Date(e.date)))
+                        Spacer(Modifier.height(8.dp))
+                        TransactionDetailItem("Descrição", e.description.ifBlank { "Sem descrição" })
+                    }
                 }
             }
         }
@@ -77,7 +98,7 @@ fun ExpenseDetailScreen(
 
 @Composable
 private fun TransactionDetailItem(label: String, value: String) {
-    Column(modifier = Modifier.padding(vertical = 8.dp)) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
@@ -85,7 +106,8 @@ private fun TransactionDetailItem(label: String, value: String) {
         )
         Text(
             text = value,
-            style = MaterialTheme.typography.bodyLarge
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
 }

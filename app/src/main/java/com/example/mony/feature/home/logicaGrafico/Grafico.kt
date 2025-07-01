@@ -2,8 +2,14 @@ package com.example.mony.feature.home.logicaGrafico
 
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -84,6 +90,7 @@ import com.example.mony.feature.home.formatCurrency
 import com.example.mony.ui.theme.Gray
 import com.example.mony.ui.theme.GreenLight
 import com.example.mony.ui.theme.RedLight
+import kotlinx.coroutines.delay
 import java.util.Calendar
 import java.util.Locale
 
@@ -149,59 +156,58 @@ fun HomeWithGraph(
     }
 }
 
-// Corrigido: evita animações desnecessárias e melhora a performance geral
 @Composable
 fun BarChart(
     data: List<Pair<Double, Double>>,
     selectedFilter: String,
     modifier: Modifier = Modifier
 ) {
+    // 1) Labels conforme filtro
     val labels = when (selectedFilter) {
         "Semana" -> listOf("Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom")
-        "Mês" -> (1..5).map { "Semana $it" }
-        "Ano" -> listOf("Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez")
-        else -> emptyList()
+        "Mês"    -> (1..5).map { "Semana $it" }
+        "Ano"    -> listOf("Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez")
+        else     -> emptyList()
     }
 
+    // Estado do tooltip
     var selectedBarIndex by rememberSaveable { mutableStateOf<Int?>(null) }
     val tooltipPosition = remember { mutableStateOf(Offset.Zero) }
+
+    // TextMeasurer para os labels
     val textMeasurer = rememberTextMeasurer()
-    val animatedProgress by remember { mutableFloatStateOf(1f) } // sem animação massiva
-
-    val horizontalPadding = 16.dp
-    val verticalPadding = 24.dp
-    val density = LocalDensity.current
-    val tooltipWidthPx = with(density) { 120.dp.roundToPx() }
-    val tooltipHeightPx = with(density) { 80.dp.roundToPx() }
-    var boxSize by remember { mutableStateOf(IntSize.Zero) }
-
-    val tooltipScale by animateFloatAsState(
-        targetValue = if (selectedBarIndex != null) 1f else 0f,
-        animationSpec = tween(200), label = "tooltip"
-    )
-
-    val borderStrokeWidth by animateFloatAsState(
-        targetValue = if (selectedBarIndex != null) 3f else 0f,
-        animationSpec = tween(300), label = "border"
-    )
-
-    val labelMarginPx = with(density) { 24.dp.toPx() }
-    val chartHeight = (boxSize.height.toFloat() - labelMarginPx).coerceAtLeast(1f)
-    val baseline = chartHeight / 2f
-    val maxValue = data.maxOfOrNull { maxOf(it.first, it.second).toFloat() }.takeIf { it!! > 0f } ?: 1f
-
-    val gainBrush = remember { Brush.verticalGradient(listOf(GreenLight, GreenLight.copy(alpha = 0.7f))) }
-    val lossBrush = remember { Brush.verticalGradient(listOf(RedLight.copy(alpha = 0.7f), RedLight)) }
-
     val labelTextLayouts = remember(labels, textMeasurer) {
         labels.map {
             textMeasurer.measure(
                 AnnotatedString(it),
-                style = TextStyle(color = Gray, fontSize = 12.sp, fontWeight = FontWeight.Bold),
+                style = TextStyle(color = Color.Gray, fontSize = 12.sp, fontWeight = FontWeight.Bold),
                 maxLines = 1
             )
         }
     }
+
+    // Animatable para o progresso
+    val animationProgress = remember { Animatable(0f) }
+    LaunchedEffect(data) {
+        animationProgress.snapTo(0f)
+        animationProgress.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(durationMillis = 2000, easing = FastOutSlowInEasing)
+        )
+    }
+
+    // Padding, dimensões e densidade
+    val horizontalPadding = 16.dp
+    val verticalPadding = 24.dp
+    var boxSize by remember { mutableStateOf(IntSize.Zero) }
+    val density = LocalDensity.current
+    val labelMarginPx = with(density) { 24.dp.toPx() }
+    val tooltipWidthPx = with(density) { 120.dp.roundToPx() }
+    val tooltipHeightPx = with(density) { 80.dp.roundToPx() }
+
+    // Brushes de cor
+    val gainBrush = remember { Brush.verticalGradient(listOf(GreenLight, GreenLight.copy(alpha = 0.7f))) }
+    val lossBrush = remember { Brush.verticalGradient(listOf(RedLight.copy(alpha = 0.7f), RedLight)) }
 
     Box(
         modifier = modifier
@@ -209,7 +215,11 @@ fun BarChart(
             .onGloballyPositioned { boxSize = it.size }
     ) {
         if (data.isEmpty()) {
-            Text("Nenhum dado disponível", Modifier.align(Alignment.Center), color = Color.Gray)
+            Text(
+                text = "Nenhum dado disponível",
+                color = Color.Gray,
+                modifier = Modifier.align(Alignment.Center)
+            )
             return
         }
 
@@ -221,89 +231,96 @@ fun BarChart(
                         val canvasWidth = size.width
                         val barSpacing = canvasWidth / data.size
                         val barWidth = barSpacing * 0.7f
-                        val tappedIndex = data.indices.firstOrNull { index ->
-                            val left = barSpacing * index + (barSpacing - barWidth) / 2f
+                        val tapped = data.indices.firstOrNull { idx ->
+                            val left = barSpacing * idx + (barSpacing - barWidth) / 2f
                             tapOffset.x in left..(left + barWidth)
                         }
-                        if (tappedIndex != null) {
-                            selectedBarIndex = tappedIndex.coerceIn(data.indices)
-                            val centerX = barSpacing * tappedIndex + barWidth / 2f
+                        if (tapped != null) {
+                            selectedBarIndex = tapped
+                            val centerX = barSpacing * tapped + barWidth / 2f
                             val tooltipY = if (tapOffset.y < size.height / 2f)
-                                tapOffset.y + 40.dp.toPx() else tapOffset.y - 40.dp.toPx()
+                                tapOffset.y + 40.dp.toPx()
+                            else
+                                tapOffset.y - 40.dp.toPx()
                             tooltipPosition.value = Offset(centerX, tooltipY)
                         }
                     }
                 }
         ) {
-            val canvasWidth = size.width
-            val barSpacing = canvasWidth / data.size
+            val w = size.width
+            val barCount = data.size
+            val barSpacing = w / barCount
             val barWidth = barSpacing * 0.7f
+            val chartH = (boxSize.height.toFloat() - labelMarginPx).coerceAtLeast(0f)
+            val baseline = chartH / 2f
+            val maxV = data.maxOfOrNull { maxOf(it.first, it.second).toFloat() }.takeIf { it!! > 0f } ?: 1f
+            val prog = animationProgress.value
 
-            val totalGridLines = 11
-            val lineSpacing = chartHeight / (totalGridLines - 1)
-
-            repeat(totalGridLines) { i ->
+            // Grid
+            val lines = 11
+            val spacing = chartH / (lines - 1)
+            repeat(lines) { i ->
                 drawLine(
                     color = Color.LightGray.copy(alpha = 0.3f),
-                    start = Offset(0f, i * lineSpacing),
-                    end = Offset(canvasWidth, i * lineSpacing),
+                    start = Offset(0f, i * spacing),
+                    end = Offset(w, i * spacing),
                     strokeWidth = 1f
                 )
             }
-
+            // Baseline
             drawLine(
                 color = Color.Gray.copy(alpha = 0.8f),
                 start = Offset(0f, baseline),
-                end = Offset(canvasWidth, baseline),
+                end = Offset(w, baseline),
                 strokeWidth = 2f,
                 pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 5f))
             )
 
-            data.forEachIndexed { index, (gain, loss) ->
-                val gainHeight = ((gain.toFloat() / maxValue) * baseline).coerceAtLeast(1f)
-                val lossHeight = ((loss.toFloat() / maxValue) * baseline).coerceAtLeast(1f)
-                val left = barSpacing * index + (barSpacing - barWidth) / 2f
+            data.forEachIndexed { idx, (gain, loss) ->
+                val gh = (gain.toFloat() / maxV) * baseline * prog
+                val lh = (loss.toFloat() / maxV) * baseline * prog
+                val left = barSpacing * idx + (barSpacing - barWidth) / 2f
 
-                if (gain > 0.0) {
+                if (gh > 0f) {
                     drawRoundRect(
                         brush = gainBrush,
-                        topLeft = Offset(left, baseline - gainHeight),
-                        size = Size(barWidth, gainHeight),
+                        topLeft = Offset(left, baseline - gh),
+                        size = Size(barWidth, gh),
                         cornerRadius = CornerRadius(4f, 4f)
                     )
                 }
-
-                if (loss > 0.0) {
+                if (lh > 0f) {
                     drawRoundRect(
                         brush = lossBrush,
                         topLeft = Offset(left, baseline),
-                        size = Size(barWidth, lossHeight),
+                        size = Size(barWidth, lh),
                         cornerRadius = CornerRadius(4f, 4f)
                     )
                 }
 
-                if (selectedBarIndex == index) {
+                if (selectedBarIndex == idx) {
                     drawRoundRect(
                         color = Color.Yellow,
-                        topLeft = Offset(left, baseline - gainHeight),
-                        size = Size(barWidth, gainHeight + lossHeight),
+                        topLeft = Offset(left, baseline - gh),
+                        size = Size(barWidth, gh + lh),
                         cornerRadius = CornerRadius(4f, 4f),
-                        style = Stroke(width = borderStrokeWidth)
+                        style = Stroke(width = 3f)
                     )
                 }
 
-                labelTextLayouts.getOrNull(index)?.let {
+                labelTextLayouts.getOrNull(idx)?.let { layout ->
                     drawText(
-                        it,
+                        layout,
                         topLeft = Offset(
-                            left + barWidth / 2 - it.size.width / 2,
-                            chartHeight + 4.dp.toPx()
+                            left + barWidth / 2f - layout.size.width / 2f,
+                            chartH + 4.dp.toPx()
                         )
                     )
                 }
             }
         }
 
+        // Legenda
         FlowRow(
             Modifier.padding(5.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -312,6 +329,7 @@ fun BarChart(
             LegendItem(color = RedLight, label = "Gastos")
         }
 
+        // Tooltip
         AnimatedVisibility(
             visible = selectedBarIndex != null,
             enter = fadeIn(tween(300)) + expandVertically(tween(300)),
@@ -326,28 +344,29 @@ fun BarChart(
             }
         ) {
             Card(
-                modifier = Modifier.scale(tooltipScale),
+                modifier = Modifier.scale(1f),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 elevation = CardDefaults.cardElevation(4.dp),
                 shape = RoundedCornerShape(8.dp)
             ) {
                 Column(Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        labels.getOrElse(selectedBarIndex ?: 0) { "#${(selectedBarIndex ?: 0) + 1}" },
-                        color = Color.Black,
+                        text = labels.getOrElse(selectedBarIndex ?: 0) { "#${(selectedBarIndex ?: 0) + 1}" },
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(Modifier.height(4.dp))
                     selectedBarIndex?.let { i ->
-                        val (gain, loss) = data.getOrNull(i) ?: (0.0 to 0.0)
-                        Text("▲ ${formatCurrency(gain)}", color = GreenLight)
-                        Text("▼ ${formatCurrency(loss)}", color = RedLight)
+                        val (g, l) = data[i]
+                        Text("▲ ${formatCurrency(g)}", color = GreenLight)
+                        Text("▼ ${formatCurrency(l)}", color = RedLight)
                     }
                 }
             }
         }
     }
 }
+
+
 
 @Composable
 private fun LegendItem(color: Color, label: String) {

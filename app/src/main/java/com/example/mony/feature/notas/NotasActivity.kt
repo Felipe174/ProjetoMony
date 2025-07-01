@@ -77,6 +77,7 @@ import com.example.mony.feature.utils.navegation.MyApp
 import com.example.mony.feature.utils.navegation.getTopLevelDestinations
 import com.example.mony.ui.theme.MonyTheme
 import kotlinx.coroutines.launch
+import androidx.core.graphics.toColorInt
 
 
 class NotasActivity : ComponentActivity() {
@@ -318,7 +319,7 @@ fun DrawerMenu(onMenuItemClick: (String) -> Unit, navController: NavController) 
 
 @Composable
 fun DrawerItem(icon: Int, title: String, onClick: () -> Unit, isSelected: Boolean) {
-    val selectedBackgroundColor = Color(android.graphics.Color.parseColor("#fff0f5"))
+    val selectedBackgroundColor = Color("#fff0f5".toColorInt())
     val selectedTextColor = MaterialTheme.colorScheme.primary
     val defaultBackgroundColor = Color.Transparent
     val defaultTextColor = Color.Gray

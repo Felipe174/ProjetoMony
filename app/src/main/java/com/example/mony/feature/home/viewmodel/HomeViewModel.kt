@@ -3,7 +3,6 @@ package com.example.mony.feature.home.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.mony.feature.conta.viewmodel.ContaViewModel
 import com.example.mony.feature.home.classe.Expense
 import com.example.mony.feature.home.classe.TransactionType
 import com.google.firebase.Firebase
@@ -23,6 +22,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import kotlin.coroutines.cancellation.CancellationException
 
 open class HomeViewModel : ViewModel() {
@@ -127,30 +127,43 @@ open class HomeViewModel : ViewModel() {
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
     }
 
-    fun deleteExpense(expenseId: String) = viewModelScope.launch(Dispatchers.IO) {
-        _uiState.value = UiState.Loading
+    fun deleteExpense(expenseId: String) = viewModelScope.launch {
+        withContext(Dispatchers.Main) {
+            _uiState.value = UiState.Loading
+        }
+
         val currentUserId = userId ?: run {
             Log.e("HomeVM", "Usuário não autenticado (userId é null)")
-            _authState.value = AuthState.Unauthenticated
+            withContext(Dispatchers.Main) {
+                _authState.value = AuthState.Unauthenticated
+            }
             return@launch
         }
 
-        Log.d("HomeVM", "Deletando expense $expenseId para o user $currentUserId")
+        Log.d("HomeVM", "Tentando deletar a transação com ID: $expenseId para o usuário: $currentUserId")
 
         try {
-            Firebase.firestore.collection("users")
-                .document(currentUserId)
-                .collection("transactions")
-                .document(expenseId)
-                .delete()
-                .await()
+            withContext(Dispatchers.IO) {
+                Firebase.firestore.collection("users")
+                    .document(currentUserId)
+                    .collection("transactions")
+                    .document(expenseId)
+                    .delete()
+                    .await()
+            }
 
             Log.d("HomeVM", "Despesa deletada com sucesso: $expenseId")
+
             _expenses.update { it.filterNot { e -> e.id == expenseId } }
-            _uiState.value = UiState.Success("Despesa removida com sucesso")
+
+            withContext(Dispatchers.Main) {
+                _uiState.value = UiState.Success("Despesa removida com sucesso")
+            }
         } catch (e: Exception) {
             Log.e("HomeVM", "Erro ao deletar despesa: ${e.message}", e)
-            handleFirestoreError(e, "Erro ao excluir despesa")
+            withContext(Dispatchers.Main) {
+                handleFirestoreError(e, "Erro ao excluir despesa")
+            }
         }
     }
 
@@ -190,9 +203,10 @@ open class HomeViewModel : ViewModel() {
         object Authenticated : AuthState()
         object Unauthenticated : AuthState()
         object Loading : AuthState()
-        data class Error(val message: String) : AuthState()
     }
 }
+
+
 
 class fakeHomeViewModel : HomeViewModel() {
     // Podes sobrescrever LiveData/StateFlow com valores fixos aqui se necessário

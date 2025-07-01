@@ -20,8 +20,8 @@ import kotlin.coroutines.cancellation.CancellationException
 sealed class LoginState {
     object Idle : LoginState()
     object Loading : LoginState()
-    data class Success(val userEmail: String) : LoginState()
-    data class Error(val message: String) : LoginState()
+    class Success() : LoginState()
+    class Error() : LoginState()
 }
 
 @Suppress("DEPRECATION")
@@ -41,12 +41,12 @@ class LoginViewModel(
             try {
                 auth.currentUser?.reload()?.await()
                 auth.currentUser?.email?.let { email ->
-                    _loginState.value = LoginState.Success(email)
+                    _loginState.value = LoginState.Success()
                 } ?: run {
                     _loginState.value = LoginState.Idle
                 }
             } catch (e: Exception) {
-                _loginState.value = LoginState.Error("Erro na verificação de autenticação: ${e.message ?: "Desconhecido"}")
+                _loginState.value = LoginState.Error()
             }
         }
     }
@@ -59,16 +59,16 @@ class LoginViewModel(
                 val result = auth.signInWithCredential(credential).await()
 
                 result.user?.let { user ->
-                    _loginState.value = LoginState.Success(user.email ?: "Usuário sem e-mail")
+                    _loginState.value = LoginState.Success()
                 } ?: run {
-                    _loginState.value = LoginState.Error("Falha ao autenticar usuário")
+                    _loginState.value = LoginState.Error()
                 }
             } catch (e: Exception) {
                 _loginState.value = when (e) {
-                    is FirebaseAuthInvalidUserException -> LoginState.Error("Conta inválida")
-                    is FirebaseAuthUserCollisionException -> LoginState.Error("Conta já vinculada")
-                    is CancellationException -> LoginState.Error("Operação cancelada")
-                    else -> LoginState.Error("Erro: ${e.message ?: "Falha na autenticação"}")
+                    is FirebaseAuthInvalidUserException -> LoginState.Error()
+                    is FirebaseAuthUserCollisionException -> LoginState.Error()
+                    is CancellationException -> LoginState.Error()
+                    else -> LoginState.Error()
                 }
             }
         }
@@ -80,15 +80,15 @@ class LoginViewModel(
             try {
                 val result = auth.signInWithEmailAndPassword(email, password).await()
                 _loginState.value = if (result.user != null) {
-                    LoginState.Success(result.user?.email ?: "Usuário sem e-mail")
+                    LoginState.Success()
                 } else {
-                    LoginState.Error("Falha ao autenticar usuário")
+                    LoginState.Error()
                 }
             } catch (e: Exception) {
                 _loginState.value = when (e) {
-                    is FirebaseAuthInvalidUserException -> LoginState.Error("Conta inválida")
-                    is FirebaseAuthInvalidCredentialsException -> LoginState.Error("Credenciais inválidas")
-                    else -> LoginState.Error("Erro: ${e.message ?: "Falha na autenticação"}")
+                    is FirebaseAuthInvalidUserException -> LoginState.Error()
+                    is FirebaseAuthInvalidCredentialsException -> LoginState.Error()
+                    else -> LoginState.Error()
                 }
             }
         }

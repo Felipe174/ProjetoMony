@@ -1,13 +1,2 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
-        <color name="roxo">#8E24AA</color>
-        <color name="purple">#673AB7</color>
-        <color name="blue">#1E88E5</color>
-        <color name="green">#26A69A</color>
-        <color name="orange">#FF7043</color>
-        <color name="yellow">#FBC02D</color>
-        <color name="red">#F44336</color>
-        <color name="light_gray">#F5F5F5</color>
-        <color name="gray">#E0E0E0</color>
-        <color name="dark_gray">#424242</color>
-</resources>
+<resources></resources>

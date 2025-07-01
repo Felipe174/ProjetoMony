@@ -1,12 +1,8 @@
 [versions]
 accompanistPager = "0.36.0"
-activity = "1.9.3"
 coilCompose = "2.7.0"
 compiler = "4.16.0"
-constraintlayout = "2.2.0"
 firebaseAnalytics = "22.4.0"
-firebaseAuth = "23.1.0"
-firebaseBom = "33.8.0"
 firebaseDatabase = "21.0.0"
 foundationLayout = "1.8.2"
 constraintlayoutCompose = "1.1.1"
@@ -16,40 +12,28 @@ hiltNavigationCompose = "1.2.0"
 kotlinxCoroutinesAndroid = "1.10.2"
 kotlinxSerializationJson = "1.8.1"
 lifecycleViewmodelCompose = "2.9.0"
-material3 = "1.3.1"
-material3Icons = "1.0.0"
 materialIconsCore = "1.7.8"
 materialIconsExtended = "1.7.8"
 playServicesAuth = "21.3.0"
 agp = "8.11.0"
 kotlin = "2.1.0"
-coreKtx = "1.10.1"
 junit = "4.13.2"
 activityCompose = "1.10.1"
-composeBom = "2024.04.01"
-firebaseFirestoreKtx = "25.1.1"
-uiDesktop = "1.7.0"
-navigationRuntimeKtx = "2.8.5"
 playServicesWallet = "19.4.0"
 firebaseDataconnect = "16.0.2"
 material3AdaptiveNavigationSuiteAndroid = "1.3.2"
 glanceAppwidget = "1.1.1"
-material3Jvmstubs = "1.4.0-alpha05"
 generativeai = "0.9.0"
 storage = "1.5.0"
 uiTestAndroid = "1.8.2"
 identityJvm = "202411.1"
-firebaseAuthKtx = "23.1.0"
 media3CommonKtx = "1.7.1"
-firebaseCrashlyticsKtx = "19.4.0"
-mediationTestSuite = "3.0.0"
 
 
 [libraries]
 accompanist-pager = { module = "com.google.accompanist:accompanist-pager", version.ref = "accompanistPager" }
 accompanist-pager-indicators = { module = "com.google.accompanist:accompanist-pager-indicators", version.ref = "accompanistPager" }
 accompanist-swiperefresh = { module = "com.google.accompanist:accompanist-swiperefresh", version.ref = "accompanistPager" }
-androidx-adaptive = { module = "androidx.compose.material3.adaptive:adaptive", version.ref = "material3Icons" }
 androidx-constraintlayout-compose = { module = "androidx.constraintlayout:constraintlayout-compose", version.ref = "constraintlayoutCompose" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version = "1.16.0" }
 androidx-foundation-layout = { module = "androidx.compose.foundation:foundation-layout", version.ref = "foundationLayout" }
@@ -61,7 +45,6 @@ androidx-material-icons-extended = { module = "androidx.compose.material:materia
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 compiler = { module = "com.github.bumptech.glide:compiler", version.ref = "compiler" }
 firebase-analytics = { module = "com.google.firebase:firebase-analytics", version.ref = "firebaseAnalytics" }
-firebase-auth = { module = "com.google.firebase:firebase-auth", version.ref = "firebaseAuth" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version = "33.14.0" }
 firebase-database = { module = "com.google.firebase:firebase-database", version.ref = "firebaseDatabase" }
 glide = { module = "com.github.bumptech.glide:glide", version.ref = "compiler" }
@@ -97,8 +80,6 @@ androidx-ui-test-android = { group = "androidx.compose.ui", name = "ui-test-andr
 identity-jvm = { group = "com.android.identity", name = "identity-jvm", version.ref = "identityJvm" }
 firebase-auth-ktx = { group = "com.google.firebase", name = "firebase-auth-ktx", version = "23.2.1" }
 androidx-media3-common-ktx = { group = "androidx.media3", name = "media3-common-ktx", version.ref = "media3CommonKtx" }
-firebase-crashlytics-ktx = { group = "com.google.firebase", name = "firebase-crashlytics-ktx", version.ref = "firebaseCrashlyticsKtx" }
-mediation-test-suite = { group = "com.google.android.ads", name = "mediation-test-suite", version.ref = "mediationTestSuite" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -1,6 +1,7 @@
 
 buildscript {
     repositories {
+        gradlePluginPortal()
         google()  // Necessário para Compose
         mavenCentral()  // Para outras dependências
     }
